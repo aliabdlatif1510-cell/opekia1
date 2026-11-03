@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useCallback, Suspense, type FormEvent } from "react";
 import { Plus, Search, Pencil, Trash2, X, Briefcase, FileCheck, AlarmClock, Wallet } from "lucide-react";
 import {
   SEED,
@@ -13,6 +13,8 @@ import {
   type Status,
 } from "@/lib/contracts";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 
 const KEY = "opekia_contracts";
 type Draft = Omit<Contract, "id">;
@@ -56,7 +58,7 @@ function contractToRow(c: Draft) {
   };
 }
 
-export default function WorkPage() {
+function WorkContent() {
   const [items, setItems] = useState<Contract[]>([]);
   const [ready, setReady] = useState(false);
   const [q, setQ] = useState("");
@@ -432,5 +434,19 @@ export default function WorkPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WorkPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <WorkContent />
+    </Suspense>
   );
 }

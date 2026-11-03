@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { Users, Home, CalendarDays, ListChecks, Archive, Receipt, Wrench, ShoppingCart } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 type Meta = {
   title: string;

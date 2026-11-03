@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, Suspense, type ReactNode } from "react";
 import { Briefcase, Users, Home, Moon, Sun, LogOut, Sparkles } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -114,7 +114,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </button>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="flex-1 p-4 md:p-8">
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
+        </main>
       </div>
     </div>
   );

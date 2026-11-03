@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, Suspense, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Mail, Lock, Loader2 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 type Session = { name: string; email: string; preview: boolean };
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -36,7 +38,6 @@ export default function LoginPage() {
           const { data, error: err } = await supabase.auth.signUp({ email, password });
           if (err) { setError(err.message); setLoading(false); return; }
           if (data.user && !data.session) {
-            // Email confirmation required
             setError("تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق منه ثم تسجيل الدخول.");
             setLoading(false);
             return;
@@ -132,5 +133,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
