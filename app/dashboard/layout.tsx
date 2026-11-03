@@ -15,21 +15,29 @@ const NAV = [
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [dark, setDark] = useState(true);
 
   useEffect(() => {
+    setMounted(true);
     const init = async () => {
+      if (typeof window === "undefined") return;
+
       // Check Supabase session first
       if (isSupabaseConfigured) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const name = session.user.email?.split("@")[0] ?? "مستخدم";
-          setUser({ name });
-          // sync to localStorage for components that read it
-          localStorage.setItem("opekia_session", JSON.stringify({ name, email: session.user.email, preview: false }));
-        } else {
-          // fallback to localStorage (preview mode)
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const name = session.user.email?.split("@")[0] ?? "مستخدم";
+            setUser({ name });
+            localStorage.setItem("opekia_session", JSON.stringify({ name, email: session.user.email, preview: false }));
+          } else {
+            const raw = localStorage.getItem("opekia_session");
+            if (!raw) { router.replace("/"); return; }
+            setUser(JSON.parse(raw));
+          }
+        } catch {
           const raw = localStorage.getItem("opekia_session");
           if (!raw) { router.replace("/"); return; }
           setUser(JSON.parse(raw));
@@ -40,9 +48,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         setUser(JSON.parse(raw));
       }
 
-      const isDark = localStorage.getItem("opekia_theme") !== "light";
-      setDark(isDark);
-      document.documentElement.classList.toggle("dark", isDark);
+      try {
+        const isDark = localStorage.getItem("opekia_theme") !== "light";
+        setDark(isDark);
+        if (typeof document !== "undefined") {
+          document.documentElement.classList.toggle("dark", isDark);
+        }
+      } catch {}
     };
     init();
   }, [router]);
@@ -50,19 +62,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const toggleTheme = () => {
     const next = !dark;
     setDark(next);
-    localStorage.setItem("opekia_theme", next ? "dark" : "light");
-    document.documentElement.classList.toggle("dark", next);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("opekia_theme", next ? "dark" : "light");
+      } catch {}
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("dark", next);
+    }
   };
 
   const logout = async () => {
     if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch {}
     }
-    localStorage.removeItem("opekia_session");
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("opekia_session");
+      } catch {}
+    }
     router.replace("/");
   };
 
-  if (!user) return null;
+  if (!mounted || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">

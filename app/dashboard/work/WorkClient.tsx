@@ -57,6 +57,7 @@ function contractToRow(c: Draft) {
 }
 
 function WorkContent() {
+  const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<Contract[]>([]);
   const [ready, setReady] = useState(false);
   const [q, setQ] = useState("");
@@ -67,27 +68,36 @@ function WorkContent() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // ---------- Load data ----------
   const loadData = useCallback(async () => {
     if (isSupabaseConfigured) {
-      const { data, error } = await supabase
-        .from("contracts")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (!error && data) {
-        setItems(data.map(rowToContract));
-      } else {
-        // Supabase error — fall back to seed data for first use
-        console.warn("Supabase load error, using seed data:", error?.message);
+      try {
+        const { data, error } = await supabase
+          .from("contracts")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && data) {
+          setItems(data.map(rowToContract));
+        } else {
+          console.warn("Supabase load error, using seed data:", error?.message);
+          setItems(SEED);
+        }
+      } catch {
         setItems(SEED);
       }
     } else {
       // localStorage preview mode
       let data = SEED;
-      try {
-        const raw = localStorage.getItem(KEY);
-        if (raw) data = JSON.parse(raw);
-      } catch {}
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem(KEY);
+          if (raw) data = JSON.parse(raw);
+        } catch {}
+      }
       setItems(data);
     }
     setReady(true);
@@ -97,7 +107,11 @@ function WorkContent() {
 
   // Save to localStorage in preview mode
   useEffect(() => {
-    if (ready && !isSupabaseConfigured) localStorage.setItem(KEY, JSON.stringify(items));
+    if (ready && !isSupabaseConfigured && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(items));
+      } catch {}
+    }
   }, [items, ready]);
 
   useEffect(() => {
@@ -201,10 +215,14 @@ function WorkContent() {
     if (!confirm(`حذف "${c.title}"؟`)) return;
 
     if (isSupabaseConfigured) {
-      const { error } = await supabase.from("contracts").delete().eq("id", c.id);
-      if (error) { setToast("❌ " + error.message); return; }
-      await loadData();
-      setToast("🗑️ تم حذف العقد");
+      try {
+        const { error } = await supabase.from("contracts").delete().eq("id", c.id);
+        if (error) { setToast("❌ " + error.message); return; }
+        await loadData();
+        setToast("🗑️ تم حذف العقد");
+      } catch {
+        setToast("❌ خطأ أثناء الحذف");
+      }
       return;
     }
 
@@ -215,12 +233,14 @@ function WorkContent() {
   // ---------- Update status ----------
   const setStatus = async (id: string, status: Status) => {
     if (isSupabaseConfigured) {
-      const { error } = await supabase
-        .from("contracts")
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) { setToast("❌ " + error.message); return; }
-      await loadData();
+      try {
+        const { error } = await supabase
+          .from("contracts")
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq("id", id);
+        if (error) { setToast("❌ " + error.message); return; }
+        await loadData();
+      } catch {}
       return;
     }
     setItems((p) => p.map((c) => (c.id === id ? { ...c, status } : c)));
@@ -232,6 +252,14 @@ function WorkContent() {
     { label: "تنبيهات التجديد (60 يوماً)", value: kpi.expiring, icon: AlarmClock, color: "text-rose-500" },
     { label: "إجمالي القيمة التعاقدية", value: money(kpi.total), icon: Wallet, color: "text-amber-500" },
   ];
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

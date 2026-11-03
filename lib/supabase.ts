@@ -1,18 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tkmpqigzqsavspxknqxl.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ZQfbTLTymMJvHJZnMglH8w_eRlEAC8V'
 
-/** true when both env vars are set — otherwise the app falls back to localStorage preview mode */
-export const isSupabaseConfigured =
-  supabaseUrl.length > 0 && supabaseAnonKey.length > 0;
-
-/**
- * Shared Supabase browser client.
- * Safe to import anywhere — if the env vars are missing the client simply won't
- * be used (the app checks `isSupabaseConfigured` first).
- */
-export const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder-key"
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const isSupabaseConfigured = true;

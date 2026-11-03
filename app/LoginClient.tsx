@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, type FormEvent } from "react";
+import { useState, useEffect, Suspense, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Mail, Lock, Loader2 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -9,14 +9,25 @@ type Session = { name: string; email: string; preview: boolean };
 
 function LoginForm() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const enter = (session: Session) => {
-    localStorage.setItem("opekia_session", JSON.stringify(session));
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("opekia_session", JSON.stringify(session));
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
     router.push("/dashboard");
   };
 
@@ -59,6 +70,14 @@ function LoginForm() {
 
   const input =
     "w-full rounded-xl border border-white/15 bg-white/5 py-3 pe-10 ps-4 text-white placeholder:text-slate-400 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/40";
+
+  if (!mounted) {
+    return (
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      </main>
+    );
+  }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-4">
