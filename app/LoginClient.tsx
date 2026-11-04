@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Sparkles, Mail, Lock, Loader2 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -100,10 +101,13 @@ function LoginForm() {
       <div className="relative w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex justify-center">
-            <img
-              src="/logo-dark.png"
+            <Image
+              src="/logo.jpg"
               alt="أوبكيا | Opekia"
-              className="h-16 w-auto object-contain drop-shadow-2xl"
+              width={300}
+              height={100}
+              className="object-contain w-auto h-auto mx-auto rounded-2xl"
+              priority
             />
           </div>
           <h1 className="text-3xl font-extrabold text-white">أوبكيا | Opekia</h1>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, type ReactNode } from "react";
 import {
@@ -118,18 +119,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <aside className="border-b border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-navy-900/80 md:min-h-screen md:w-64 md:border-b-0 md:border-e">
         {/* Brand Header with Official Logo */}
         <div className="flex items-center justify-between pb-5 border-b border-slate-200/60 dark:border-white/[0.06]">
-          <Link href="/dashboard" className="group flex items-center gap-2">
-            {/* Light Mode Logo */}
-            <img
-              src="/logo.png"
+          <Link href="/dashboard" className="group flex items-center">
+            <Image
+              src="/logo.jpg"
               alt="أوبكيا | Opekia"
-              className="h-10 w-auto max-w-[170px] object-contain block dark:hidden transition-transform duration-300 group-hover:scale-105"
-            />
-            {/* Dark Mode Logo */}
-            <img
-              src="/logo-dark.png"
-              alt="أوبكيا | Opekia"
-              className="h-10 w-auto max-w-[170px] object-contain hidden dark:block transition-transform duration-300 group-hover:scale-105"
+              width={150}
+              height={50}
+              className="object-contain w-auto h-auto rounded-xl"
             />
           </Link>
         </div>
