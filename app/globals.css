@@ -1,3 +1,65 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .bg-grid-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  
+  .bg-grid-pattern-light {
+    background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+}
+
+@keyframes laserPulse {
+  0% { transform: translateY(-100%); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateY(200%); opacity: 0; }
+}
+
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes breathGlow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.04); }
+}
+
+.animate-orbit-slow {
+  animation: orbitSpin 30s linear infinite;
+}
+
+.animate-orbit-hover:hover {
+  animation: orbitSpin 10s linear infinite;
+}
+
+.animate-laser {
+  animation: laserPulse 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-breath {
+  animation: breathGlow 6s ease-in-out infinite;
+}
+
+/* Precision Specular Glass */
+.specular-lens {
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 65%, transparent 100%);
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4),
+    0 12px 36px -10px rgba(0, 0, 0, 0.4);
+}
+
+.specular-lens-light {
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.3) 65%, transparent 100%);
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05),
+    0 12px 30px -10px rgba(0, 0, 0, 0.08);
+}
