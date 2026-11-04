@@ -44,7 +44,8 @@ export default function WorkClient() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveSection>("partnerships");
 
-  // Open Message Input
+  // Open Message Inputs
+  const [titleInput, setTitleInput] = useState("");
   const [messageInput, setMessageInput] = useState("");
   const [toast, setToast] = useState("");
 
@@ -113,11 +114,12 @@ export default function WorkClient() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Open Message Submission (Automatic Date)
+  // Open Message Submission (Title + Content + Automatic Date)
   const handleSendMessage = (e: FormEvent) => {
     e.preventDefault();
+    const title = titleInput.trim();
     const text = messageInput.trim();
-    if (!text) return;
+    if (!title || !text) return;
 
     const autoDate = todayDate;
     const id = `${Date.now()}`;
@@ -125,7 +127,7 @@ export default function WorkClient() {
     if (activeTab === "partnerships") {
       const newItem: Partnership & { date?: string } = {
         id: `p-${id}`,
-        name: text,
+        name: title,
         field: "شراكة استراتيجية",
         type: "strategic",
         status: "active",
@@ -134,11 +136,11 @@ export default function WorkClient() {
         date: autoDate,
       };
       setPartnerships([newItem as any, ...partnerships]);
-      setToast("✅ تمت إضافة رسالة الشراكة بالتاريخ التلقائي");
+      setToast("✅ تمت إضافة رسالة الشراكة بالعنوان والتاريخ التلقائي");
     } else if (activeTab === "contracts") {
       const newItem: ContractItem & { date?: string } = {
         id: `c-${id}`,
-        title: text,
+        title: title,
         party: "جهة معتمدة",
         value: 0,
         startDate: autoDate,
@@ -149,11 +151,11 @@ export default function WorkClient() {
         date: autoDate,
       };
       setContracts([newItem as any, ...contracts]);
-      setToast("✅ تمت إضافة رسالة التعاقد بالتاريخ التلقائي");
+      setToast("✅ تمت إضافة رسالة التعاقد بالعنوان والتاريخ التلقائي");
     } else if (activeTab === "opportunities") {
       const newItem: Opportunity & { date?: string } = {
         id: `op-${id}`,
-        title: text,
+        title: title,
         client: "فرصة استثمارية",
         estimatedValue: 0,
         stage: "lead",
@@ -163,22 +165,23 @@ export default function WorkClient() {
         date: autoDate,
       };
       setOpportunities([newItem as any, ...opportunities]);
-      setToast("✅ تمت إضافة رسالة الفرصة بالتاريخ التلقائي");
+      setToast("✅ تمت إضافة رسالة الفرصة بالعنوان والتاريخ التلقائي");
     } else if (activeTab === "recommendations") {
       const newItem: Recommendation = {
         id: `rec-${id}`,
-        title: text,
+        title: title,
         category: "توصية تنفيذية",
         priority: "high",
-        impact: "تحسين الأداء",
+        impact: "تحسين وتطوير الأعمال",
         date: autoDate,
         description: text,
         status: "active",
       };
       setRecommendations([newItem, ...recommendations]);
-      setToast("✅ تمت إضافة رسالة التوصية بالتاريخ التلقائي");
+      setToast("✅ تمت إضافة رسالة التوصية بالعنوان والتاريخ التلقائي");
     }
 
+    setTitleInput("");
     setMessageInput("");
   };
 
@@ -204,10 +207,12 @@ export default function WorkClient() {
       color: "blue",
       badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
       btnClass: "bg-blue-600 hover:bg-blue-500 shadow-blue-500/25",
-      placeholder: "اكتب رسالة الشراكة هنا بكل حرية... (مثال: اتفاق تعاون جديد مع مجموعة الحلول المتقدمة)",
+      titlePlaceholder: "عنوان رسالة الشراكة (يظهر كعنوان رئيسي عند العميل)...",
+      contentPlaceholder: "اكتب تفاصيل ومحتوى رسالة الشراكة هنا بكل حرية...",
       items: partnerships.map((p) => ({
         id: p.id,
-        text: p.name,
+        title: p.name,
+        text: p.notes || p.name,
         date: (p as any).date || todayDate,
       })),
     },
@@ -217,10 +222,12 @@ export default function WorkClient() {
       color: "emerald",
       badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
       btnClass: "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/25",
-      placeholder: "اكتب رسالة التعاقد هنا بكل حرية... (مثال: بدء تفعيل المرحلة الأولى من العقد التشغيلي)",
+      titlePlaceholder: "عنوان رسالة التعاقد (يظهر كعنوان رئيسي عند العميل)...",
+      contentPlaceholder: "اكتب تفاصيل ومحتوى رسالة التعاقد هنا بكل حرية...",
       items: contracts.map((c) => ({
         id: c.id,
-        text: c.title,
+        title: c.title,
+        text: c.notes || c.title,
         date: (c as any).date || c.startDate || todayDate,
       })),
     },
@@ -230,10 +237,12 @@ export default function WorkClient() {
       color: "amber",
       badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
       btnClass: "bg-amber-500 hover:bg-amber-400 shadow-amber-500/25",
-      placeholder: "اكتب رسالة الفرصة هنا بكل حرية... (مثال: مسار استثماري جديد مطروح في قطاع التكنولوجيا)",
+      titlePlaceholder: "عنوان رسالة الفرصة (يظهر كعنوان رئيسي عند العميل)...",
+      contentPlaceholder: "اكتب تفاصيل ومحتوى رسالة الفرصة هنا بكل حرية...",
       items: opportunities.map((o) => ({
         id: o.id,
-        text: o.title,
+        title: o.title,
+        text: o.notes || o.title,
         date: (o as any).date || o.expectedClose || todayDate,
       })),
     },
@@ -243,10 +252,12 @@ export default function WorkClient() {
       color: "purple",
       badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
       btnClass: "bg-purple-600 hover:bg-purple-500 shadow-purple-500/25",
-      placeholder: "اكتب رسالة التوصية هنا بكل حرية... (مثال: يُوصى بتحديث بروتوكول الأمان وفتح قنوات التحصيل)",
+      titlePlaceholder: "عنوان رسالة التوصية (يظهر كعنوان رئيسي عند العميل)...",
+      contentPlaceholder: "اكتب تفاصيل ومحتوى رسالة التوصية هنا بكل حرية...",
       items: recommendations.map((r) => ({
         id: r.id,
-        text: r.title,
+        title: r.title,
+        text: r.description || r.title,
         date: r.date || todayDate,
       })),
     },
@@ -334,13 +345,13 @@ export default function WorkClient() {
       </div>
 
       {/* =================================================================== */}
-      {/* صندوق الإدخال المفتوح (رسالة فقط + التاريخ أوتوماتيك) */}
+      {/* صندوق الإدخال المفتوح (عنوان + رسالة + التاريخ أوتوماتيك) */}
       {/* =================================================================== */}
       <form
         onSubmit={handleSendMessage}
-        className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80"
+        className="rounded-3xl border border-slate-200/90 bg-white p-5 md:p-6 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80 space-y-4"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 dark:border-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5 dark:border-white/5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-white">
               <CurrentIcon size={18} />
@@ -350,7 +361,7 @@ export default function WorkClient() {
                 إضافة رسالة جديدة إلى: {currentMeta.title}
               </h3>
               <span className="text-[11px] text-slate-400">
-                مدخل مفتوح — التاريخ يتم تسجيله تلقائياً
+                العنوان يظهر مباشرة للعميل — التاريخ يتم تسجيله تلقائياً
               </span>
             </div>
           </div>
@@ -362,19 +373,39 @@ export default function WorkClient() {
           </div>
         </div>
 
-        {/* Textarea مفتوحة */}
-        <textarea
-          rows={3}
-          required
-          value={messageInput}
-          onChange={(e) => setMessageInput(e.target.value)}
-          placeholder={currentMeta.placeholder}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-slate-900"
-        />
+        {/* حقل عنوان الرسالة (يسمع في صفحة العميل) */}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            عنوان الرسالة <span className="text-rose-500">*</span>
+          </label>
+          <input
+            type="text"
+            required
+            value={titleInput}
+            onChange={(e) => setTitleInput(e.target.value)}
+            placeholder={currentMeta.titlePlaceholder}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition placeholder:font-normal focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-slate-900"
+          />
+        </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        {/* حقل محتوى وتفاصيل الرسالة المفتوح */}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            محتوى وتفاصيل الرسالة <span className="text-rose-500">*</span>
+          </label>
+          <textarea
+            rows={3}
+            required
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            placeholder={currentMeta.contentPlaceholder}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-slate-900"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <span className="text-xs text-slate-400">
-            تصل الرسالة فوراً إلى صفحة العميل في قلبها كلمة «اهتم»
+            تصل الرسالة فوراً لصفحة العميل مع إمكانية فتحها وقراءتها والتفاعل بزر «اهتم»
           </span>
 
           <button
@@ -388,7 +419,7 @@ export default function WorkClient() {
       </form>
 
       {/* =================================================================== */}
-      {/* قائمة الرسائل المضافة (مع التاريخ الأوتوماتيكي وزر الحذف) */}
+      {/* قائمة الرسائل المضافة (مع العنوان والتاريخ الأوتوماتيكي وزر الحذف) */}
       {/* =================================================================== */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
@@ -410,17 +441,20 @@ export default function WorkClient() {
             {currentMeta.items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-white/10 dark:bg-slate-900/80"
+                className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-white/10 dark:bg-slate-900/80"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 mt-0.5">
                     <CurrentIcon size={16} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">
+                    <p className="text-sm font-black text-slate-900 dark:text-white leading-snug">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2">
                       {item.text}
                     </p>
-                    <div className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
                       <Clock size={11} />
                       <span>التاريخ المسجل: {item.date}</span>
                     </div>
