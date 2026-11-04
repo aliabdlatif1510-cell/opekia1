@@ -14,12 +14,14 @@ import {
   Sparkles,
   Command,
   CircleDot,
+  Headphones,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const NAV = [
   { href: "/dashboard", label: "الرئيسية", code: "00", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/wishes", label: "نفسك في إيه؟", code: "AI", icon: Sparkles },
+  { href: "/dashboard/contact", label: "تواصل معنا", code: "01", icon: Headphones },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
