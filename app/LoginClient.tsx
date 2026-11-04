@@ -44,8 +44,14 @@ function LoginForm() {
     if (isSupabaseConfigured) {
       try {
         if (mode === "signup") {
+          console.log("Signup attempt:", { email });
           const { data, error: err } = await supabase.auth.signUp({ email, password });
-          if (err) { setError(err.message); setLoading(false); return; }
+          if (err) {
+            console.error("Supabase Auth Error:", err);
+            setError(err.message || "An unexpected error occurred");
+            setLoading(false);
+            return;
+          }
           if (data.user && !data.session) {
             setError("تم إرسال رابط التأكيد إلى بريدك الإلكتروني. يرجى التحقق منه ثم تسجيل الدخول.");
             setLoading(false);
@@ -53,12 +59,19 @@ function LoginForm() {
           }
           enter({ name: data.user?.email?.split("@")[0] ?? "مستخدم", email, preview: false });
         } else {
+          console.log("Login attempt:", { email });
           const { data, error: err } = await supabase.auth.signInWithPassword({ email, password });
-          if (err) { setError(err.message); setLoading(false); return; }
+          if (err) {
+            console.error("Supabase Auth Error:", err);
+            setError(err.message || "An unexpected error occurred");
+            setLoading(false);
+            return;
+          }
           enter({ name: data.user.email?.split("@")[0] ?? "مستخدم", email, preview: false });
         }
-      } catch (err) {
-        setError("حدث خطأ في الاتصال بالخادم");
+      } catch (err: any) {
+        console.error("Supabase Auth Error:", err);
+        setError(err?.message || "An unexpected error occurred");
         setLoading(false);
       }
       return;

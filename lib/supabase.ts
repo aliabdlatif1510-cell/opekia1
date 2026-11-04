@@ -1,9 +1,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl =
+const rawUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || "https://tkmpqigzqsavspxknqxl.supabase.co";
-const supabaseAnonKey =
+const rawKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_ZQfbTLTymMJvHJZnMglH8w_eRlEAC8V";
+
+// Strictly format: remove leading/trailing whitespace and any trailing slash
+const supabaseUrl = rawUrl.trim().replace(/\/+$/, "");
+const supabaseAnonKey = rawKey.trim();
 
 let cachedClient: SupabaseClient | null = null;
 
