@@ -18,7 +18,6 @@ import {
   PARTNERSHIP_TYPES,
   PARTNERSHIP_STATUS,
   CONTRACT_STATUS,
-  STAGE_CONFIG,
   type Partnership,
   type ContractItem,
   type Opportunity,
@@ -34,10 +33,8 @@ import {
   getAdminOpportunities,
   getAdminRecommendations,
   getAllRecommendations,
-  KEY_PARTNERSHIPS,
-  KEY_CONTRACTS,
-  KEY_OPPORTUNITIES,
-  KEY_RECOMMENDATIONS,
+  getUnifiedClientOpportunities,
+  type ClientOpportunityItem,
 } from "@/lib/portal-sync";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -51,6 +48,7 @@ export default function PortalWorkClient() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveSection>("partnerships");
   const [searchQuery, setSearchQuery] = useState("");
+  const [oppFilter, setOppFilter] = useState<string>("all");
 
   // Listen to URL query params for direct tab selection
   useEffect(() => {
@@ -132,9 +130,15 @@ export default function PortalWorkClient() {
     };
   }, []);
 
+  // Recommendations: Admin direct inputs + auto-synthesized
   const recommendations: Recommendation[] = useMemo(() => {
     return getAllRecommendations(adminRecs, partnerships, contracts, opportunities);
   }, [adminRecs, partnerships, contracts, opportunities]);
+
+  // Unified Opportunities: Links ALL THREE inputs (Opportunities, Contracts, and Partnerships)
+  const unifiedOpportunities: ClientOpportunityItem[] = useMemo(() => {
+    return getUnifiedClientOpportunities(opportunities, contracts, partnerships);
+  }, [opportunities, contracts, partnerships]);
 
   // Filtered items based on search query
   const filteredPartnerships = useMemo(() => {
@@ -159,16 +163,19 @@ export default function PortalWorkClient() {
     );
   }, [contracts, searchQuery]);
 
-  const filteredOpportunities = useMemo(() => {
-    if (!searchQuery.trim()) return opportunities;
-    const q = searchQuery.toLowerCase();
-    return opportunities.filter(
-      (o) =>
-        o.title.toLowerCase().includes(q) ||
-        o.client.toLowerCase().includes(q) ||
-        (o.notes && o.notes.toLowerCase().includes(q))
-    );
-  }, [opportunities, searchQuery]);
+  const filteredUnifiedOpps = useMemo(() => {
+    return unifiedOpportunities.filter((item) => {
+      const matchSearch =
+        !searchQuery.trim() ||
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.counterparty.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.notes.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sourceLabel.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchFilter = oppFilter === "all" || item.sourceType === oppFilter;
+      return matchSearch && matchFilter;
+    });
+  }, [unifiedOpportunities, searchQuery, oppFilter]);
 
   const filteredRecommendations = useMemo(() => {
     if (!searchQuery.trim()) return recommendations;
@@ -192,14 +199,14 @@ export default function PortalWorkClient() {
     const avgCProgress =
       totalC > 0 ? Math.round(contracts.reduce((acc, c) => acc + (c.progress || 0), 0) / totalC) : 0;
 
-    const totalO = opportunities.length;
+    const totalO = unifiedOpportunities.length;
     const totalOValue = opportunities.reduce((acc, o) => acc + (o.estimatedValue || 0), 0);
 
     const totalR = recommendations.length;
     const activeR = recommendations.filter((r) => r.status === "active").length;
 
     return { totalP, activeP, totalC, totalCValue, avgCProgress, totalO, totalOValue, totalR, activeR };
-  }, [partnerships, contracts, opportunities, recommendations]);
+  }, [partnerships, contracts, opportunities, unifiedOpportunities, recommendations]);
 
   if (!mounted) {
     return (
@@ -222,7 +229,7 @@ export default function PortalWorkClient() {
             شغلي — الشراكات، التعاقدات، الفرص والتوصيات
           </h1>
           <p className="mt-1 text-xs md:text-sm text-slate-500 dark:text-slate-400">
-            سجلات ومؤشرات حية مربوطة مباشرة بمدخلات الإدارة المركزية
+            سجلات ومؤشرات حية مربوطة مباشرة بمدخلات الإدارة المركزية (في الوقت الفعلي)
           </p>
         </div>
       </div>
@@ -289,7 +296,7 @@ export default function PortalWorkClient() {
           </div>
         </div>
 
-        {/* 3. الفرص */}
+        {/* 3. الفرص (مرتبطة بالمدخلات الثلاثة: صفقات، عقود، شراكات) */}
         <div
           onClick={() => setActiveTab("opportunities")}
           className={`cursor-pointer rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 ${
@@ -306,15 +313,15 @@ export default function PortalWorkClient() {
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">الفرص</h3>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {stats.totalO} فرص ومشاريع
+                  صفقات وعقود وشراكات
                 </span>
               </div>
             </div>
             <div className="text-end">
               <span className="text-xs font-black text-amber-600 dark:text-amber-400 block truncate max-w-[100px]">
-                {money(stats.totalOValue)}
+                {stats.totalO}
               </span>
-              <span className="text-[10px] text-slate-400">قيمة تقديرية</span>
+              <span className="text-[10px] text-slate-400">فرصة نشطة</span>
             </div>
           </div>
         </div>
@@ -386,7 +393,7 @@ export default function PortalWorkClient() {
             }`}
           >
             <TrendingUp size={14} />
-            <span>الفرص ({filteredOpportunities.length})</span>
+            <span>الفرص الموحدة ({filteredUnifiedOpps.length})</span>
           </button>
 
           <button
@@ -574,83 +581,135 @@ export default function PortalWorkClient() {
       )}
 
       {/* =================================================================== */}
-      {/* TAB 3: الفرص (Read-Only) */}
+      {/* TAB 3: الفرص الموحدة (مرتبطة مباشرة بجميع مدخلات الشؤون: الصفقات والعقود والشراكات) */}
       {/* =================================================================== */}
       {activeTab === "opportunities" && (
         <div className="space-y-4">
-          {filteredOpportunities.length === 0 ? (
+          {/* Sub-filter chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pb-1">
+            {[
+              { id: "all", label: `الكل (${unifiedOpportunities.length})` },
+              { id: "opportunity", label: `فرص الصفقات (${opportunities.length})` },
+              { id: "contract", label: `التعاقدات (${contracts.length})` },
+              { id: "partnership", label: `الشراكات (${partnerships.length})` },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setOppFilter(f.id)}
+                className={`rounded-xl px-3 py-1.5 font-bold transition shrink-0 ${
+                  oppFilter === f.id
+                    ? "bg-amber-500 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-400"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {filteredUnifiedOpps.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-white/10">
               <TrendingUp className="mx-auto text-slate-400 mb-2" size={32} />
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                لا توجد فرص تجارية مسجلة تطابق البحث
+                لا توجد فرص مسجلة تطابق البحث
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredOpportunities.map((op) => {
-                const stageMeta = STAGE_CONFIG[op.stage] || {
-                  label: op.stage,
-                  style: "bg-slate-100 text-slate-600",
-                };
+              {filteredUnifiedOpps.map((item) => {
+                const isContract = item.sourceType === "contract";
+                const isPartnership = item.sourceType === "partnership";
 
                 return (
                   <div
-                    key={op.id}
-                    className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:border-amber-500/30 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60"
+                    key={item.id}
+                    className={`flex flex-col justify-between rounded-2xl border bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-slate-900/60 ${
+                      isContract
+                        ? "border-emerald-500/30 hover:border-emerald-500/60"
+                        : isPartnership
+                        ? "border-blue-500/30 hover:border-blue-500/60"
+                        : "border-amber-500/30 hover:border-amber-500/60"
+                    }`}
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                          العميل: {op.client}
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${item.sourceBadgeStyle}`}>
+                          {isContract ? (
+                            <FileCheck2 size={12} />
+                          ) : isPartnership ? (
+                            <Handshake size={12} />
+                          ) : (
+                            <TrendingUp size={12} />
+                          )}
+                          <span>{item.sourceLabel}</span>
                         </span>
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${stageMeta.style}`}>
-                          {stageMeta.label}
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.stageStyle}`}>
+                          {item.stageLabel}
                         </span>
                       </div>
 
                       <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                        {op.title}
+                        {item.title}
                       </h3>
 
-                      <div className="mt-3 flex items-center justify-between text-xs">
-                        <span className="text-slate-500">القيمة المتوقعة:</span>
-                        <span className="text-sm font-black text-amber-600 dark:text-amber-400">
-                          {money(op.estimatedValue)}
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="font-semibold">{item.counterpartyLabel}: </span>
+                        <span>{item.counterparty}</span>
+                      </div>
+
+                      {/* Financial Value or Partnership Type */}
+                      <div className="mt-3 flex items-center justify-between text-xs rounded-xl bg-slate-50/80 dark:bg-white/5 p-2.5">
+                        <span className="text-slate-500">
+                          {isPartnership ? "نوع التعاون:" : "القيمة المقررة:"}
+                        </span>
+                        <span
+                          className={`text-sm font-black ${
+                            isContract
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : isPartnership
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-amber-600 dark:text-amber-400"
+                          }`}
+                        >
+                          {item.valueDisplay}
                         </span>
                       </div>
 
-                      {/* Probability */}
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-slate-500">احتمالية الإغلاق</span>
-                          <span className="font-bold text-slate-900 dark:text-white">{op.probability}%</span>
+                      {/* Metric (Progress % or Probability %) */}
+                      {item.metricPercentage !== undefined && (
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-slate-500">{item.metricLabel}</span>
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {item.metricPercentage}%
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${
+                                isContract
+                                  ? "bg-emerald-500"
+                                  : "bg-gradient-to-r from-amber-500 to-orange-500"
+                              }`}
+                              style={{ width: `${item.metricPercentage}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                            style={{ width: `${op.probability}%` }}
-                          />
-                        </div>
-                      </div>
+                      )}
 
-                      <div className="mt-3 text-xs text-slate-500 flex items-center gap-1">
-                        <Clock size={12} />
-                        <span>الإغلاق المتوقع: {op.expectedClose}</span>
-                      </div>
-
-                      {op.notes && (
+                      {item.notes && (
                         <p className="mt-3 rounded-xl bg-slate-50 dark:bg-white/5 p-2.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                          {op.notes}
+                          {item.notes}
                         </p>
                       )}
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 size={12} className="text-amber-500" />
-                        فرصة مسجلة
+                        <Clock size={12} />
+                        <span>{item.dateLabel}: {item.date}</span>
                       </span>
-                      <span className="font-mono text-[10px]">ID: {op.id}</span>
+                      <span className="font-mono text-[10px]">ID: {item.id}</span>
                     </div>
                   </div>
                 );
