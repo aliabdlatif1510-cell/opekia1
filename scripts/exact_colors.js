@@ -18,6 +18,9 @@ async function renderExact(isDark = false) {
   const { width, height } = info;
 
   const outBuf = Buffer.alloc(width * height * 4);
+  const cx = 512, cy = 382;
+
+  let erasedCount = 0;
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -52,8 +55,10 @@ async function renderExact(isDark = false) {
         continue;
       }
 
-      // 2. Text letters ('op' and 'kia')
+      // Middle letter area:
       const isMiddleArea = (x >= 450 && x <= 568 && y >= 280 && y <= 512);
+
+      // 2. Text letters ('op' and 'kia')
       const isTextLetter = !isMiddleArea && isInsideLetter(x, y) && (chroma < 35 && brightness < 155);
 
       if (isDark && isTextLetter) {
@@ -65,7 +70,22 @@ async function renderExact(isDark = false) {
         continue;
       }
 
-      // 3. For ALL other pixels (Letter E and frequency rings):
+      // 3. Remove largest circle in frequencies (dist >= 291)
+      if (!isMiddleArea && !isTextLetter) {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist >= 291) {
+          outBuf[idx] = 0;
+          outBuf[idx + 1] = 0;
+          outBuf[idx + 2] = 0;
+          outBuf[idx + 3] = 0;
+          erasedCount++;
+          continue;
+        }
+      }
+
+      // 4. For ALL other pixels (Letter E and remaining frequency rings):
       // Keep 100% EXACT original RGB values sent by user!
       outBuf[idx] = r;
       outBuf[idx + 1] = g;
@@ -73,6 +93,8 @@ async function renderExact(isDark = false) {
       outBuf[idx + 3] = alpha;
     }
   }
+
+  console.log(`Erased ${erasedCount} pixels from the largest frequency circle (dist >= 291).`);
 
   const publicDir = path.join(__dirname, '../public');
   const baseName = isDark ? 'logo-dark.png' : 'logo.png';
@@ -91,7 +113,6 @@ async function renderExact(isDark = false) {
   console.log(`Saved exact colors high-DPI asset: ${baseName}`);
 
   if (isDark) {
-    const cx = 512, cy = 382;
     await sharp(outBuf, { raw: { width, height, channels: 4 } })
       .extract({ left: cx - 360, top: cy - 360, width: 720, height: 720 })
       .resize(512, 512, { kernel: sharp.kernel.lanczos3 })
@@ -104,7 +125,7 @@ async function renderExact(isDark = false) {
 async function main() {
   await renderExact(false);
   await renderExact(true);
-  console.log('Finished rendering exact original colors.');
+  console.log('Finished rendering with largest frequency ring removed.');
 }
 
 main().catch(console.error);
