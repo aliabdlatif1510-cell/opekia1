@@ -7,12 +7,18 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "أوبكيا | Opekia",
   description: "منصة شخصية وإدارية ذكية",
+  icons: {
+    icon: "/logo-icon.png",
+    shortcut: "/logo-icon.png",
+    apple: "/logo-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/logo-icon.png" />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"

@@ -99,10 +99,14 @@ function LoginForm() {
 
       <div className="relative w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-600 shadow-xl shadow-emerald-500/30">
-            <Sparkles className="text-white" size={30} />
+          <div className="mx-auto mb-4 flex justify-center">
+            <img
+              src="/logo-dark.png"
+              alt="أوبكيا | Opekia"
+              className="h-16 w-auto object-contain drop-shadow-2xl"
+            />
           </div>
-          <h1 className="text-4xl font-extrabold text-white">أوبكيا | Opekia</h1>
+          <h1 className="text-3xl font-extrabold text-white">أوبكيا | Opekia</h1>
           <p className="mt-2 text-sm text-slate-300">منصتك الشخصية والإدارية الذكية</p>
           {isSupabaseConfigured && (
             <p className="mt-1 text-xs text-emerald-400">🟢 متصل بقاعدة البيانات</p>

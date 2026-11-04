@@ -116,22 +116,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100 md:flex-row">
       {/* Sidebar */}
       <aside className="border-b border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-navy-900/80 md:min-h-screen md:w-64 md:border-b-0 md:border-e">
-        {/* Brand Monogram */}
-        <div className="flex items-center justify-between pb-6 border-b border-slate-200/60 dark:border-white/[0.06]">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
-              <Command size={18} />
-              <span className="absolute -top-0.5 -end-0.5 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
-            </div>
-            <div>
-              <span className="block text-base font-black tracking-tight">أوبكيا</span>
-              <span className="block font-mono text-[9px] font-bold tracking-widest text-slate-400 dark:text-slate-500 uppercase">
-                INTELLIGENT OS
-              </span>
-            </div>
+        {/* Brand Header with Official Logo */}
+        <div className="flex items-center justify-between pb-5 border-b border-slate-200/60 dark:border-white/[0.06]">
+          <Link href="/dashboard" className="group flex items-center gap-2">
+            {/* Light Mode Logo */}
+            <img
+              src="/logo.png"
+              alt="أوبكيا | Opekia"
+              className="h-10 w-auto max-w-[170px] object-contain block dark:hidden transition-transform duration-300 group-hover:scale-105"
+            />
+            {/* Dark Mode Logo */}
+            <img
+              src="/logo-dark.png"
+              alt="أوبكيا | Opekia"
+              className="h-10 w-auto max-w-[170px] object-contain hidden dark:block transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
         </div>
 
