@@ -124,17 +124,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <Image
               src="/logo.png"
               alt="Opekia Logo"
-              width={140}
-              height={105}
-              className="object-contain w-auto h-12 block dark:hidden transition-transform duration-300 group-hover:scale-105"
+              width={160}
+              height={120}
+              className="object-contain w-auto h-14 block dark:hidden transition-transform duration-300 group-hover:scale-105"
             />
             {/* Dark Mode Logo */}
             <Image
               src="/logo-dark.png"
               alt="Opekia Logo"
-              width={140}
-              height={105}
-              className="object-contain w-auto h-12 hidden dark:block transition-transform duration-300 group-hover:scale-105"
+              width={160}
+              height={120}
+              className="object-contain w-auto h-14 hidden dark:block transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
         </div>

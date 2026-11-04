@@ -103,8 +103,8 @@ function LoginForm() {
           <Image 
             src="/logo-dark.png" 
             alt="Opekia Logo" 
-            width={240} 
-            height={180} 
+            width={280} 
+            height={210} 
             className="object-contain mx-auto drop-shadow-2xl transition-transform duration-300 hover:scale-105" 
             priority 
           />
