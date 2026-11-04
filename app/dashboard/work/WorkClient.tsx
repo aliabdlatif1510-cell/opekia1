@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Handshake,
   FileCheck2,
@@ -40,9 +41,25 @@ const money = (n: number) =>
 type ActiveSection = "partnerships" | "contracts" | "opportunities";
 
 export default function WorkClient() {
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveSection>("partnerships");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Listen to URL query params for direct tab & new modal triggers
+  useEffect(() => {
+    if (!searchParams) return;
+    const tab = searchParams.get("tab");
+    if (tab === "partnerships" || tab === "contracts" || tab === "opportunities") {
+      setActiveTab(tab);
+    }
+    const isNew = searchParams.get("new");
+    if (isNew === "true" || isNew === "1") {
+      if (tab === "partnerships") setPartnerModal(true);
+      if (tab === "contracts") setContractModal(true);
+      if (tab === "opportunities") setOppModal(true);
+    }
+  }, [searchParams]);
 
   // 1. الشراكات
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);

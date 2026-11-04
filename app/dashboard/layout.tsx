@@ -15,6 +15,10 @@ import {
   Command,
   CircleDot,
   Headphones,
+  Handshake,
+  FileCheck2,
+  TrendingUp,
+  Plus,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -167,6 +171,79 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {/* تلات مربعات: الشراكات، التعاقدات، الفرص */}
+        <div className="mt-6 space-y-3 pt-4 border-t border-slate-200/60 dark:border-white/[0.06]">
+          <div className="px-1 text-[11px] font-black text-slate-400 dark:text-slate-500">
+            إجراءات سريعة
+          </div>
+
+          {/* مربع الشراكات */}
+          <div className="group relative flex flex-col justify-between rounded-2xl border border-blue-500/20 bg-gradient-to-b from-blue-500/[0.06] to-transparent p-3 shadow-sm transition-all duration-300 hover:border-blue-500/40 hover:shadow-md dark:border-blue-500/25 dark:bg-navy-900/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+                  <Handshake size={14} />
+                </div>
+                <span className="text-xs font-black text-slate-800 dark:text-slate-200">الشراكات</span>
+              </div>
+              <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500" />
+            </div>
+
+            {/* في قلب المربع: شراكة جديدة */}
+            <Link
+              href="/dashboard/work?tab=partnerships&new=true"
+              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+            >
+              <Plus size={13} />
+              <span>شراكة جديدة</span>
+            </Link>
+          </div>
+
+          {/* مربع التعاقدات */}
+          <div className="group relative flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.06] to-transparent p-3 shadow-sm transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md dark:border-emerald-500/25 dark:bg-navy-900/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                  <FileCheck2 size={14} />
+                </div>
+                <span className="text-xs font-black text-slate-800 dark:text-slate-200">التعاقدات</span>
+              </div>
+              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </div>
+
+            {/* في قلب المربع: تعاقد جديد */}
+            <Link
+              href="/dashboard/work?tab=contracts&new=true"
+              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+            >
+              <Plus size={13} />
+              <span>تعاقد جديد</span>
+            </Link>
+          </div>
+
+          {/* مربع الفرص */}
+          <div className="group relative flex flex-col justify-between rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-500/[0.06] to-transparent p-3 shadow-sm transition-all duration-300 hover:border-amber-500/40 hover:shadow-md dark:border-amber-500/25 dark:bg-navy-900/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                  <TrendingUp size={14} />
+                </div>
+                <span className="text-xs font-black text-slate-800 dark:text-slate-200">الفرص</span>
+              </div>
+              <span className="flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+            </div>
+
+            {/* في قلب المربع: فرص جديد */}
+            <Link
+              href="/dashboard/work?tab=opportunities&new=true"
+              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+            >
+              <Plus size={13} />
+              <span>فرص جديد</span>
+            </Link>
+          </div>
+        </div>
       </aside>
 
       {/* Main View Area */}
