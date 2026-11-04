@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
-import DashboardClient from "../DashboardClient";
+import WishesClient from "./WishesClient";
 
 export default function WishesPage() {
-  return <DashboardClient />;
+  return <WishesClient />;
 }
