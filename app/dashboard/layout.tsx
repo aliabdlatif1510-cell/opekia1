@@ -118,17 +118,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className="border-b border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-navy-900/80 md:min-h-screen md:w-64 md:border-b-0 md:border-e">
         {/* Brand Header with Official Logo */}
-        <div className="flex items-center justify-between pb-5 border-b border-slate-200/60 dark:border-white/[0.06]">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-white/[0.06]">
           <Link href="/dashboard" className="group flex items-center">
-            <div className="bg-white p-1 rounded-lg inline-block shadow-sm">
-              <Image
-                src="/logo.jpg"
-                alt="Opekia Logo"
-                width={150}
-                height={50}
-                className="object-contain w-auto h-auto rounded-md"
-              />
-            </div>
+            {/* Light Mode Logo */}
+            <Image
+              src="/logo.png"
+              alt="Opekia Logo"
+              width={140}
+              height={105}
+              className="object-contain w-auto h-12 block dark:hidden transition-transform duration-300 group-hover:scale-105"
+            />
+            {/* Dark Mode Logo */}
+            <Image
+              src="/logo-dark.png"
+              alt="Opekia Logo"
+              width={140}
+              height={105}
+              className="object-contain w-auto h-12 hidden dark:block transition-transform duration-300 group-hover:scale-105"
+            />
           </Link>
         </div>
 

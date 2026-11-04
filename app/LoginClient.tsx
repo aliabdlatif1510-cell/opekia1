@@ -99,17 +99,15 @@ function LoginForm() {
       <div className="pointer-events-none absolute -bottom-32 -end-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
 
       <div className="relative w-full max-w-md">
-        <div className="text-center">
-          <div className="bg-white px-8 py-4 rounded-3xl shadow-2xl mx-auto inline-block mb-8">
-            <Image 
-              src="/logo.jpg" 
-              alt="Opekia Logo" 
-              width={250} 
-              height={80} 
-              className="object-contain" 
-              priority 
-            />
-          </div>
+        <div className="text-center mb-8">
+          <Image 
+            src="/logo-dark.png" 
+            alt="Opekia Logo" 
+            width={240} 
+            height={180} 
+            className="object-contain mx-auto drop-shadow-2xl transition-transform duration-300 hover:scale-105" 
+            priority 
+          />
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
