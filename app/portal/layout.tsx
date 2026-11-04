@@ -16,6 +16,9 @@ import {
   ShieldCheck,
   ArrowLeft,
   ChevronLeft,
+  Briefcase,
+  Users,
+  Home,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import {
@@ -28,8 +31,12 @@ import {
 } from "@/lib/auth";
 
 const NAV = [
-  { href: "/portal", label: "الرئيسية (التوصيات والفرص)", code: "00", icon: LayoutDashboard, exact: true },
-  { href: "/portal/contact", label: "تواصل معنا", code: "01", icon: Headphones },
+  { href: "/portal", label: "الرئيسية", code: "00", icon: LayoutDashboard, exact: true },
+  { href: "/portal/work", label: "شغلي (الفرص والتوصيات)", code: "01", icon: Briefcase },
+  { href: "/portal/family", label: "عائلتي", code: "02", icon: Users },
+  { href: "/portal/home", label: "بيتي", code: "03", icon: Home },
+  { href: "/portal/wishes", label: "نفسك في إيه؟", code: "AI", icon: Sparkles },
+  { href: "/portal/contact", label: "تواصل معنا", code: "04", icon: Headphones },
 ];
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
@@ -215,7 +222,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
               <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">مخصصة</span>
             </div>
             <Link
-              href="/portal"
+              href="/portal/work?tab=recommendations"
               className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <span>عرض التوصيات</span>
@@ -235,7 +242,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
               <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">متاحة</span>
             </div>
             <Link
-              href="/portal"
+              href="/portal/work?tab=opportunities"
               className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <span>عرض الفرص</span>
