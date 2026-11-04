@@ -6,22 +6,27 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, type ReactNode } from "react";
 import {
   LayoutDashboard,
-  Briefcase,
-  Users,
-  Home,
   Moon,
   Sun,
   LogOut,
   Sparkles,
-  Command,
-  CircleDot,
   Headphones,
   Handshake,
   FileCheck2,
   TrendingUp,
   Plus,
+  ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  fetchUserProfile,
+  getLocalSession,
+  saveLocalSession,
+  clearLocalSession,
+  type UserSession,
+  type UserRole,
+} from "@/lib/auth";
 
 const NAV = [
   { href: "/dashboard", label: "الرئيسية", code: "00", icon: LayoutDashboard, exact: true },
@@ -33,7 +38,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [user, setUser] = useState<{ name: string } | null>(null);
+  const [user, setUser] = useState<UserSession | null>(null);
   const [dark, setDark] = useState(true);
 
   useEffect(() => {
@@ -45,23 +50,60 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
-            const name = session.user.email?.split("@")[0] ?? "مستخدم";
-            setUser({ name });
-            localStorage.setItem("opekia_session", JSON.stringify({ name, email: session.user.email, preview: false }));
+            const profile = await fetchUserProfile(session.user.id);
+            const role: UserRole = profile?.role || "client";
+
+            // If user is NOT an admin, redirect them immediately to the Client Portal!
+            if (role !== "admin") {
+              router.replace("/portal");
+              return;
+            }
+
+            const name = profile?.full_name || session.user.email?.split("@")[0] || "مدير النظام";
+            const sessionData: UserSession = {
+              id: session.user.id,
+              name,
+              email: session.user.email || "",
+              role: "admin",
+              preview: false,
+            };
+            setUser(sessionData);
+            saveLocalSession(sessionData);
           } else {
-            const raw = localStorage.getItem("opekia_session");
-            if (!raw) { router.replace("/"); return; }
-            setUser(JSON.parse(raw));
+            const stored = getLocalSession();
+            if (!stored) {
+              router.replace("/");
+              return;
+            }
+            if (stored.role !== "admin") {
+              router.replace("/portal");
+              return;
+            }
+            setUser(stored);
           }
         } catch {
-          const raw = localStorage.getItem("opekia_session");
-          if (!raw) { router.replace("/"); return; }
-          setUser(JSON.parse(raw));
+          const stored = getLocalSession();
+          if (!stored) {
+            router.replace("/");
+            return;
+          }
+          if (stored.role !== "admin") {
+            router.replace("/portal");
+            return;
+          }
+          setUser(stored);
         }
       } else {
-        const raw = localStorage.getItem("opekia_session");
-        if (!raw) { router.replace("/"); return; }
-        setUser(JSON.parse(raw));
+        const stored = getLocalSession();
+        if (!stored) {
+          router.replace("/");
+          return;
+        }
+        if (stored.role !== "admin") {
+          router.replace("/portal");
+          return;
+        }
+        setUser(stored);
       }
 
       try {
@@ -94,11 +136,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
       } catch {}
     }
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem("opekia_session");
-      } catch {}
-    }
+    clearLocalSession();
     router.replace("/");
   };
 
@@ -114,9 +152,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100 md:flex-row">
-      {/* Sidebar */}
-      <aside className="border-b border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-navy-900/80 md:min-h-screen md:w-64 md:border-b-0 md:border-e">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 md:flex-row">
+      {/* Executive Sidebar */}
+      <aside className="w-full shrink-0 border-b border-slate-200/80 bg-white/70 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 md:w-72 md:border-b-0 md:border-e">
         {/* Brand Header with Official Logo */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-white/[0.06]">
           <Link href="/dashboard" className="group flex items-center">
@@ -137,6 +175,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               className="object-contain w-auto h-14 hidden dark:block transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
+
+          {/* Admin Badge */}
+          <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <ShieldCheck size={12} />
+            إدارة
+          </span>
         </div>
 
         {/* Navigation items */}
@@ -147,28 +191,24 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <Link
                 key={href}
                 href={href}
-                className={`group relative flex items-center justify-between whitespace-nowrap rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 ${
+                className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all ${
                   active
-                    ? "bg-slate-900 text-white shadow-sm dark:bg-white/[0.08] dark:text-white"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.03] dark:hover:text-slate-200"
+                    ? "bg-emerald-500/10 text-emerald-600 shadow-sm dark:bg-emerald-400/15 dark:text-emerald-400"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
                 }`}
               >
                 <div className="flex items-center gap-2.5">
                   <Icon
                     size={16}
-                    className={`transition-colors ${
+                    className={
                       active
-                        ? "text-emerald-400"
-                        : "text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300"
-                    }`}
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-slate-400 transition group-hover:text-slate-900 dark:text-slate-500 dark:group-hover:text-white"
+                    }
                   />
                   <span>{label}</span>
                 </div>
-                <span
-                  className={`font-mono text-[9px] tracking-wider transition-opacity ${
-                    active ? "opacity-100 text-slate-400" : "opacity-40 group-hover:opacity-75"
-                  }`}
-                >
+                <span className="font-mono text-[10px] text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300">
                   {code}
                 </span>
               </Link>
@@ -176,69 +216,78 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* تلات مربعات: الشراكات، التعاقدات، الفرص */}
-        <div className="mt-6 space-y-3 pt-4 border-t border-slate-200/60 dark:border-white/[0.06]">
-          <div className="px-1 text-[11px] font-black text-slate-400 dark:text-slate-500">
-            إجراءات سريعة
+        {/* 3 Executive Action Hubs */}
+        <div className="mt-6 pt-5 border-t border-slate-200/60 dark:border-white/[0.06] space-y-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
+            إدارة الأعمال والعقود
           </div>
 
-          {/* مربع الشراكات */}
-          <div className="group relative flex flex-col justify-between rounded-2xl border border-blue-500/20 bg-gradient-to-b from-blue-500/[0.06] to-transparent p-3 shadow-sm transition-all duration-300 hover:border-blue-500/40 hover:shadow-md dark:border-blue-500/25 dark:bg-navy-900/60">
+          {/* 1. مربع الشراكات */}
+          <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/10 p-3.5 shadow-sm transition hover:border-blue-500/35">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
-                  <Handshake size={14} />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30">
+                  <Handshake size={15} />
                 </div>
-                <span className="text-xs font-black text-slate-800 dark:text-slate-200">الشراكات</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">الشراكات</span>
               </div>
-              <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <Link
+                href="/dashboard/work?tab=partnerships"
+                className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                عرض
+              </Link>
             </div>
-
-            {/* في قلب المربع: شراكة جديدة */}
             <Link
               href="/dashboard/work?tab=partnerships&new=true"
-              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <Plus size={13} />
               <span>شراكة جديدة</span>
             </Link>
           </div>
 
-          {/* مربع التعاقدات */}
-          <div className="group relative flex flex-col justify-between rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.06] to-transparent p-3 shadow-sm transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md dark:border-emerald-500/25 dark:bg-navy-900/60">
+          {/* 2. مربع التعاقدات */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-teal-500/10 p-3.5 shadow-sm transition hover:border-emerald-500/35">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-                  <FileCheck2 size={14} />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/30">
+                  <FileCheck2 size={15} />
                 </div>
-                <span className="text-xs font-black text-slate-800 dark:text-slate-200">التعاقدات</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">التعاقدات</span>
               </div>
-              <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <Link
+                href="/dashboard/work?tab=contracts"
+                className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                عرض
+              </Link>
             </div>
-
-            {/* في قلب المربع: تعاقد جديد */}
             <Link
               href="/dashboard/work?tab=contracts&new=true"
-              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
+              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <Plus size={13} />
               <span>تعاقد جديد</span>
             </Link>
           </div>
 
-          {/* مربع الفرص */}
-          <div className="group relative flex flex-col justify-between rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-500/[0.06] to-transparent p-3 shadow-sm transition-all duration-300 hover:border-amber-500/40 hover:shadow-md dark:border-amber-500/25 dark:bg-navy-900/60">
+          {/* 3. مربع الفرص */}
+          <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/10 p-3.5 shadow-sm transition hover:border-amber-500/35">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
-                  <TrendingUp size={14} />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm shadow-amber-500/30">
+                  <TrendingUp size={15} />
                 </div>
-                <span className="text-xs font-black text-slate-800 dark:text-slate-200">الفرص</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">الفرص</span>
               </div>
-              <span className="flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+              <Link
+                href="/dashboard/work?tab=opportunities"
+                className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                عرض
+              </Link>
             </div>
-
-            {/* في قلب المربع: فرص جديد */}
             <Link
               href="/dashboard/work?tab=opportunities&new=true"
               className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
@@ -247,6 +296,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <span>فرص جديد</span>
             </Link>
           </div>
+        </div>
+
+        {/* Client Portal Link for Admin */}
+        <div className="mt-5 pt-4 border-t border-slate-200/60 dark:border-white/[0.06]">
+          <Link
+            href="/portal"
+            className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-100/70 p-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200/70 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+          >
+            <div className="flex items-center gap-2">
+              <UserCheck size={14} className="text-blue-500" />
+              <span>معاينة بوابة العميل</span>
+            </div>
+            <span className="text-[10px] text-slate-400">Portal</span>
+          </Link>
         </div>
       </aside>
 
@@ -257,8 +320,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
             <div className="text-xs text-slate-600 dark:text-slate-400">
-              جلسة العمل: <span className="font-bold text-slate-900 dark:text-white">{user.name}</span>
+              لوحة الإدارة: <span className="font-bold text-slate-900 dark:text-white">{user.name}</span>
             </div>
+            <span className="hidden sm:inline-flex rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              Admin
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
