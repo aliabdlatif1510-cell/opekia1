@@ -11,8 +11,6 @@ import {
   LogOut,
   Sparkles,
   Headphones,
-  Handshake,
-  FileCheck2,
   TrendingUp,
   UserCheck,
   ShieldCheck,
@@ -30,8 +28,7 @@ import {
 } from "@/lib/auth";
 
 const NAV = [
-  { href: "/portal", label: "الرئيسية", code: "00", icon: LayoutDashboard, exact: true },
-  { href: "/portal/wishes", label: "نفسك في إيه؟", code: "AI", icon: Sparkles },
+  { href: "/portal", label: "الرئيسية (التوصيات والفرص)", code: "00", icon: LayoutDashboard, exact: true },
   { href: "/portal/contact", label: "تواصل معنا", code: "01", icon: Headphones },
 ];
 
@@ -200,53 +197,33 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* 3 Executive Action Hubs (Read-Only: View without creation buttons) */}
+        {/* The Two Distinct Boxes in Sidebar: 1. التوصيات | 2. الفرص */}
         <div className="mt-6 pt-5 border-t border-slate-200/60 dark:border-white/[0.06] space-y-3">
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 px-1">
-            سجلات الأعمال والخدمات
+            أقسام بوابة العميل
           </div>
 
-          {/* 1. مربع الشراكات (عرض فقط بدون إضافة) */}
+          {/* 1. خانة التوصيات */}
           <div className="rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-cyan-500/10 p-3.5 shadow-sm transition hover:border-blue-500/35">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm shadow-blue-500/30">
-                  <Handshake size={15} />
+                  <Sparkles size={15} />
                 </div>
-                <span className="text-xs font-bold text-slate-900 dark:text-white">الشراكات</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white">التوصيات</span>
               </div>
-              <span className="text-[10px] font-semibold text-slate-400">سارية</span>
+              <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400">مخصصة</span>
             </div>
             <Link
-              href="/portal/work?tab=partnerships"
+              href="/portal"
               className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
-              <span>عرض الشراكات</span>
+              <span>عرض التوصيات</span>
               <ChevronLeft size={13} />
             </Link>
           </div>
 
-          {/* 2. مربع التعاقدات (عرض فقط بدون إضافة) */}
-          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-teal-500/10 p-3.5 shadow-sm transition hover:border-emerald-500/35">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm shadow-emerald-500/30">
-                  <FileCheck2 size={15} />
-                </div>
-                <span className="text-xs font-bold text-slate-900 dark:text-white">التعاقدات</span>
-              </div>
-              <span className="text-[10px] font-semibold text-slate-400">معتمدة</span>
-            </div>
-            <Link
-              href="/portal/work?tab=contracts"
-              className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-emerald-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
-            >
-              <span>عرض التعاقدات</span>
-              <ChevronLeft size={13} />
-            </Link>
-          </div>
-
-          {/* 3. مربع الفرص (عرض فقط بدون إضافة) */}
+          {/* 2. خانة الفرص */}
           <div className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-orange-500/10 p-3.5 shadow-sm transition hover:border-amber-500/35">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -255,10 +232,10 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
                 </div>
                 <span className="text-xs font-bold text-slate-900 dark:text-white">الفرص</span>
               </div>
-              <span className="text-[10px] font-semibold text-slate-400">متاحة</span>
+              <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">متاحة</span>
             </div>
             <Link
-              href="/portal/work?tab=opportunities"
+              href="/portal"
               className="mt-2.5 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-2 px-3 text-xs font-bold text-white shadow-md shadow-amber-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98]"
             >
               <span>عرض الفرص</span>
@@ -267,7 +244,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* If Admin is testing client view, show quick link to return to Dashboard */}
+        {/* Admin Back Link (if Admin is previewing client portal) */}
         {user.role === "admin" && (
           <div className="mt-5 pt-4 border-t border-slate-200/60 dark:border-white/[0.06]">
             <Link

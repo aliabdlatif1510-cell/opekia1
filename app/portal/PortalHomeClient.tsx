@@ -1,175 +1,343 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useMemo } from "react";
 import {
-  Users,
-  Home,
-  Briefcase,
+  Sparkles,
+  TrendingUp,
+  Search,
+  Clock,
+  DollarSign,
+  CheckCircle2,
   ChevronLeft,
+  Briefcase,
+  Lightbulb,
+  ShieldCheck,
+  Target,
+  ArrowUpRight,
 } from "lucide-react";
+import {
+  SEED_RECOMMENDATIONS,
+  PRIORITY_CONFIG,
+  STATUS_CONFIG as REC_STATUS_CONFIG,
+  type Recommendation,
+} from "@/lib/recommendations";
+import {
+  SEED_OPPORTUNITIES,
+  STAGE_CONFIG,
+  type Opportunity,
+} from "@/lib/work-three";
+
+const money = (n: number) =>
+  n.toLocaleString("ar-EG", { style: "currency", currency: "EGP", maximumFractionDigits: 0 });
 
 export default function PortalHomeClient() {
-  const [hoveredHub, setHoveredHub] = useState<string | null>(null);
+  const [recommendations] = useState<Recommendation[]>(SEED_RECOMMENDATIONS);
+  const [opportunities] = useState<Opportunity[]>(SEED_OPPORTUNITIES);
 
-  const hubs = [
-    {
-      id: "family",
-      number: "1",
-      title: "عائلتي",
-      subtitle: "المناسبات، الأجندة والوثائق",
-      href: "/portal/family",
-      icon: Users,
-      stats: { primary: "٤ أفراد", secondary: "مناسبة قادمة" },
-      colors: {
-        glow: "hover:shadow-[0_0_70px_rgba(236,72,153,0.45)] dark:hover:shadow-[0_0_80px_rgba(244,63,94,0.5)]",
-        border: "border-pink-300 dark:border-pink-500/40 hover:border-pink-500",
-        numberBg: "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/40",
-        iconBg: "from-pink-500 to-rose-600 text-white shadow-xl shadow-pink-500/35",
-        text: "text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400",
-        gradient: "from-pink-500/10 via-rose-500/[0.04] to-transparent",
-        ambientGlow: "bg-pink-500/20 dark:bg-pink-500/25",
-        pill: "bg-pink-50 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300 border-pink-200 dark:border-pink-500/20",
-        ringColor: "stroke-pink-500",
-      },
-    },
-    {
-      id: "home",
-      number: "2",
-      title: "بيتي",
-      subtitle: "المصروفات، الفواتير والصيانة",
-      href: "/portal/home",
-      icon: Home,
-      stats: { primary: "ميزانية مستقرة", secondary: "صيانة مجدولة" },
-      colors: {
-        glow: "hover:shadow-[0_0_70px_rgba(16,185,129,0.45)] dark:hover:shadow-[0_0_80px_rgba(16,185,129,0.5)]",
-        border: "border-emerald-300 dark:border-emerald-500/40 hover:border-emerald-500",
-        numberBg: "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40",
-        iconBg: "from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/35",
-        text: "text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
-        gradient: "from-emerald-500/10 via-teal-500/[0.04] to-transparent",
-        ambientGlow: "bg-emerald-500/20 dark:bg-emerald-500/25",
-        pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20",
-        ringColor: "stroke-emerald-500",
-      },
-    },
-    {
-      id: "work",
-      number: "3",
-      title: "شغلي",
-      subtitle: "الشراكات، تعاقدات والفرص",
-      href: "/portal/work",
-      icon: Briefcase,
-      stats: { primary: "سجلاتك المعتمدة", secondary: "متابعة مستمرة" },
-      colors: {
-        glow: "hover:shadow-[0_0_70px_rgba(59,130,246,0.45)] dark:hover:shadow-[0_0_80px_rgba(59,130,246,0.5)]",
-        border: "border-blue-300 dark:border-blue-500/40 hover:border-blue-500",
-        numberBg: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/40",
-        iconBg: "from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/35",
-        text: "text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400",
-        gradient: "from-blue-500/10 via-indigo-500/[0.04] to-transparent",
-        ambientGlow: "bg-blue-500/20 dark:bg-blue-500/25",
-        pill: "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
-        ringColor: "stroke-blue-500",
-      },
-    },
-  ];
+  const [recSearch, setRecSearch] = useState("");
+  const [oppSearch, setOppSearch] = useState("");
+
+  const [activeRecFilter, setActiveRecFilter] = useState<string>("all");
+  const [activeOppFilter, setActiveOppFilter] = useState<string>("all");
+
+  // Filter recommendations
+  const filteredRecs = useMemo(() => {
+    return recommendations.filter((r) => {
+      const matchSearch =
+        r.title.toLowerCase().includes(recSearch.toLowerCase()) ||
+        r.category.toLowerCase().includes(recSearch.toLowerCase()) ||
+        r.description.toLowerCase().includes(recSearch.toLowerCase());
+      const matchFilter = activeRecFilter === "all" || r.status === activeRecFilter;
+      return matchSearch && matchFilter;
+    });
+  }, [recommendations, recSearch, activeRecFilter]);
+
+  // Filter opportunities
+  const filteredOpps = useMemo(() => {
+    return opportunities.filter((o) => {
+      const matchSearch =
+        o.title.toLowerCase().includes(oppSearch.toLowerCase()) ||
+        o.client.toLowerCase().includes(oppSearch.toLowerCase()) ||
+        (o.notes && o.notes.toLowerCase().includes(oppSearch.toLowerCase()));
+      const matchFilter = activeOppFilter === "all" || o.stage === activeOppFilter;
+      return matchSearch && matchFilter;
+    });
+  }, [opportunities, oppSearch, activeOppFilter]);
 
   return (
-    <main className="relative flex min-h-[calc(100vh-140px)] w-full flex-col items-center justify-center overflow-hidden py-10">
-      {/* Dynamic Ambient Color Orbs that React to Hover */}
-      <div
-        className={`pointer-events-none absolute -top-20 start-1/2 h-96 w-96 -translate-x-1/2 rounded-full blur-[140px] transition-all duration-700 ${
-          hoveredHub === "family"
-            ? "bg-pink-500/30 scale-125"
-            : hoveredHub === "home"
-            ? "bg-emerald-500/30 scale-125"
-            : hoveredHub === "work"
-            ? "bg-blue-600/30 scale-125"
-            : "bg-blue-500/15"
-        }`}
-      />
-      <div className="pointer-events-none absolute top-1/2 start-1/4 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/15 blur-[140px]" />
-      <div className="pointer-events-none absolute bottom-0 end-1/4 h-96 w-96 rounded-full bg-blue-600/15 blur-[140px]" />
-
-      {/* Main Container */}
-      <div className="relative z-10 flex w-full max-w-md flex-col items-center">
-        {/* Luminous Animated Connecting Line */}
-        <div className="pointer-events-none absolute top-16 bottom-16 w-1 rounded-full bg-gradient-to-b from-pink-500 via-emerald-500 to-blue-500 opacity-30 shadow-[0_0_15px_rgba(16,185,129,0.5)] dark:opacity-40" />
-
-        {/* 3 Circular Portals in Vertical Order */}
-        <div className="relative flex w-full flex-col items-center gap-7">
-          {hubs.map((hub) => {
-            const Icon = hub.icon;
-            const isHovered = hoveredHub === hub.id;
-
-            return (
-              <div
-                key={hub.id}
-                onMouseEnter={() => setHoveredHub(hub.id)}
-                onMouseLeave={() => setHoveredHub(null)}
-                className="relative flex items-center justify-center"
-              >
-                {/* Luminous Ambient Glow Behind Each Circle */}
-                <div
-                  className={`pointer-events-none absolute inset-0 rounded-full blur-2xl transition-all duration-500 ${
-                    hub.colors.ambientGlow
-                  } ${isHovered ? "opacity-100 scale-110" : "opacity-40 scale-95"}`}
-                />
-
-                {/* The Circular Button / Portal */}
-                <Link
-                  href={hub.href}
-                  className={`group relative flex h-52 w-52 flex-col items-center justify-center rounded-full border-2 bg-gradient-to-b ${hub.colors.gradient} ${hub.colors.border} bg-white/90 p-4 text-center shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 active:scale-95 dark:bg-navy-800/90 ${hub.colors.glow} sm:h-56 sm:w-56`}
-                >
-                  {/* Inner Specular Ring */}
-                  <div className="pointer-events-none absolute inset-1.5 rounded-full border border-white/70 dark:border-white/10" />
-
-                  {/* Elegant Number Badge (1, 2, 3) */}
-                  <div
-                    className={`absolute -top-2 start-1/2 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full text-xs font-black ring-4 ring-white dark:ring-navy-900 ${hub.colors.numberBg}`}
-                  >
-                    {hub.number}
-                  </div>
-
-                  {/* Icon Capsule with Radiant Gradient */}
-                  <div
-                    className={`relative mb-2 mt-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg transition-all duration-500 group-hover:scale-115 group-hover:rotate-6 ${hub.colors.iconBg} sm:h-15 sm:w-15`}
-                  >
-                    <Icon size={28} className="sm:size-7" />
-                  </div>
-
-                  {/* Bold Arabic Title */}
-                  <h2
-                    className={`text-2xl font-black tracking-tight transition-colors duration-300 sm:text-3xl ${hub.colors.text}`}
-                  >
-                    {hub.title}
-                  </h2>
-
-                  {/* Subtitle */}
-                  <p className="mt-1 line-clamp-1 max-w-[85%] text-[11px] font-semibold text-slate-500 transition-colors duration-300 dark:text-slate-400 sm:text-xs">
-                    {hub.subtitle}
-                  </p>
-
-                  {/* Micro Live Pill */}
-                  <div
-                    className={`mt-2 flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-black transition-all duration-300 ${hub.colors.pill}`}
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
-                    <span>{hub.stats.primary}</span>
-                  </div>
-
-                  {/* Enter Indicator on Hover */}
-                  <div className="absolute -bottom-3 flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-black text-white opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 group-hover:-translate-y-1 dark:bg-white dark:text-slate-900">
-                    <span>دخول</span>
-                    <ChevronLeft size={11} />
-                  </div>
-                </Link>
+    <div className="w-full space-y-6">
+      {/* The Two Main Sections: 1. التوصيات | 2. الفرص */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* =================================================================== */}
+        {/* الخانة الأولى: التوصيات (Recommendations) */}
+        {/* =================================================================== */}
+        <div className="flex flex-col rounded-3xl border-2 border-blue-500/30 bg-white/90 p-6 shadow-xl backdrop-blur-xl dark:border-blue-500/25 dark:bg-slate-900/80 transition-all hover:border-blue-500/50">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30">
+                <Sparkles size={24} />
               </div>
-            );
-          })}
+              <div>
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
+                  التوصيات
+                </h2>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  توجيهات وخطط استراتيجية مخصصة لحسابك
+                </span>
+              </div>
+            </div>
+
+            <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              {filteredRecs.length} توصيات
+            </span>
+          </div>
+
+          {/* Search & Filter */}
+          <div className="pt-4 pb-2 space-y-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <input
+                type="text"
+                value={recSearch}
+                onChange={(e) => setRecSearch(e.target.value)}
+                placeholder="بحث في التوصيات..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pe-9 ps-3 text-xs outline-none transition focus:border-blue-400 dark:border-white/10 dark:bg-white/5 dark:text-white"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px]">
+              {(
+                [
+                  { id: "all", label: "الكل" },
+                  { id: "active", label: "نشطة" },
+                  { id: "planned", label: "مخططة" },
+                  { id: "completed", label: "مكتملة" },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveRecFilter(tab.id)}
+                  className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                    activeRecFilter === tab.id
+                      ? "bg-blue-500 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Recommendations List (Read-Only) */}
+          <div className="mt-3 flex-1 space-y-3 overflow-y-auto max-h-[600px] pe-1">
+            {filteredRecs.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-white/10">
+                <Lightbulb className="mx-auto text-slate-400 mb-2" size={28} />
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  لا توجد توصيات تطابق البحث
+                </p>
+              </div>
+            ) : (
+              filteredRecs.map((rec) => {
+                const priorityMeta = PRIORITY_CONFIG[rec.priority] || {
+                  label: rec.priority,
+                  style: "bg-slate-100 text-slate-600",
+                };
+                const statusMeta = REC_STATUS_CONFIG[rec.status] || {
+                  label: rec.status,
+                  style: "bg-slate-100 text-slate-600",
+                };
+
+                return (
+                  <div
+                    key={rec.id}
+                    className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition-all hover:border-blue-400 hover:shadow-md dark:border-white/10 dark:bg-slate-950/50"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                        {rec.category}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${priorityMeta.style}`}>
+                          {priorityMeta.label}
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusMeta.style}`}>
+                          {statusMeta.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {rec.title}
+                    </h3>
+
+                    <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {rec.description}
+                    </p>
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                        <CheckCircle2 size={12} />
+                        الأثر: {rec.impact}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Clock size={11} />
+                        <span>{rec.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* =================================================================== */}
+        {/* الخانة الثانية: الفرص (Opportunities) */}
+        {/* =================================================================== */}
+        <div className="flex flex-col rounded-3xl border-2 border-amber-500/30 bg-white/90 p-6 shadow-xl backdrop-blur-xl dark:border-amber-500/25 dark:bg-slate-900/80 transition-all hover:border-amber-500/50">
+          
+          {/* Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30">
+                <TrendingUp size={24} />
+              </div>
+              <div>
+                <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
+                  الفرص
+                </h2>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  المشاريع الاستثمارية والصفقات المتاحة
+                </span>
+              </div>
+            </div>
+
+            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              {filteredOpps.length} فرص
+            </span>
+          </div>
+
+          {/* Search & Filter */}
+          <div className="pt-4 pb-2 space-y-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <input
+                type="text"
+                value={oppSearch}
+                onChange={(e) => setOppSearch(e.target.value)}
+                placeholder="بحث في الفرص..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pe-9 ps-3 text-xs outline-none transition focus:border-amber-400 dark:border-white/10 dark:bg-white/5 dark:text-white"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px]">
+              {(
+                [
+                  { id: "all", label: "الكل" },
+                  { id: "lead", label: "استكشاف" },
+                  { id: "proposal", label: "عرض مقدم" },
+                  { id: "negotiation", label: "تفاوض" },
+                  { id: "won", label: "مكتسبة" },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveOppFilter(tab.id)}
+                  className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                    activeOppFilter === tab.id
+                      ? "bg-amber-500 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Opportunities List (Read-Only) */}
+          <div className="mt-3 flex-1 space-y-3 overflow-y-auto max-h-[600px] pe-1">
+            {filteredOpps.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-white/10">
+                <Target className="mx-auto text-slate-400 mb-2" size={28} />
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  لا توجد فرص تطابق البحث
+                </p>
+              </div>
+            ) : (
+              filteredOpps.map((opp) => {
+                const stageMeta = STAGE_CONFIG[opp.stage] || {
+                  label: opp.stage,
+                  style: "bg-slate-100 text-slate-600",
+                };
+
+                return (
+                  <div
+                    key={opp.id}
+                    className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-white/10 dark:bg-slate-950/50"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                        الجهة: {opp.client}
+                      </span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${stageMeta.style}`}>
+                        {stageMeta.label}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      {opp.title}
+                    </h3>
+
+                    {/* Financial Value */}
+                    <div className="mt-2.5 flex items-center justify-between text-xs">
+                      <span className="text-slate-500">القيمة التقديرية:</span>
+                      <span className="text-sm font-black text-amber-600 dark:text-amber-400">
+                        {money(opp.estimatedValue)}
+                      </span>
+                    </div>
+
+                    {/* Probability */}
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <span className="text-slate-400">احتمالية الإغلاق</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {opp.probability}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500"
+                          style={{ width: `${opp.probability}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {opp.notes && (
+                      <p className="mt-2.5 rounded-xl bg-slate-50 dark:bg-white/5 p-2 text-xs text-slate-500 dark:text-slate-400">
+                        {opp.notes}
+                      </p>
+                    )}
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                      <div className="flex items-center gap-1">
+                        <Clock size={11} />
+                        <span>الإغلاق المتوقع: {opp.expectedClose}</span>
+                      </div>
+                      <span className="font-mono text-[10px]">ID: {opp.id}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
