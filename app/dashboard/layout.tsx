@@ -120,13 +120,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Brand Header with Official Logo */}
         <div className="flex items-center justify-between pb-5 border-b border-slate-200/60 dark:border-white/[0.06]">
           <Link href="/dashboard" className="group flex items-center">
-            <Image
-              src="/logo.jpg"
-              alt="أوبكيا | Opekia"
-              width={150}
-              height={50}
-              className="object-contain w-auto h-auto rounded-xl"
-            />
+            <div className="bg-white p-1 rounded-lg inline-block shadow-sm">
+              <Image
+                src="/logo.jpg"
+                alt="Opekia Logo"
+                width={150}
+                height={50}
+                className="object-contain w-auto h-auto rounded-md"
+              />
+            </div>
           </Link>
         </div>
 
