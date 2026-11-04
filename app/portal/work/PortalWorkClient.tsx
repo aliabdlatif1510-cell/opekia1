@@ -205,9 +205,11 @@ export default function PortalWorkClient() {
                         <p className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2">
                           {rec.title}
                         </p>
-                        <span className="text-[11px] text-slate-400">
-                          {rec.category || "توصية تنفيذية"}
-                        </span>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+                          <span>{rec.category || "توصية تنفيذية"}</span>
+                          <span>•</span>
+                          <span>📅 {rec.date}</span>
+                        </div>
                       </div>
                     </div>
 
@@ -294,9 +296,11 @@ export default function PortalWorkClient() {
                         <p className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2">
                           {item.title}
                         </p>
-                        <span className="text-[11px] text-slate-400">
-                          {item.sourceLabel} — {item.counterparty}
-                        </span>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-400">
+                          <span>{item.sourceLabel}</span>
+                          <span>•</span>
+                          <span>📅 {item.date}</span>
+                        </div>
                       </div>
                     </div>
 
