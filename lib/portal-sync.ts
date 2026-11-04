@@ -6,11 +6,12 @@ import {
   type ContractItem,
   type Opportunity,
 } from "./work-three";
-import { type Recommendation } from "./recommendations";
+import { SEED_RECOMMENDATIONS, type Recommendation } from "./recommendations";
 
 export const KEY_PARTNERSHIPS = "opekia_work_partnerships";
 export const KEY_CONTRACTS = "opekia_work_contracts_v2";
 export const KEY_OPPORTUNITIES = "opekia_work_opportunities";
+export const KEY_RECOMMENDATIONS = "opekia_work_recommendations";
 
 // Read raw admin inputs from storage with fallbacks
 export function getAdminPartnerships(): Partnership[] {
@@ -40,6 +41,16 @@ export function getAdminOpportunities(): Opportunity[] {
     return raw ? JSON.parse(raw) : SEED_OPPORTUNITIES;
   } catch {
     return SEED_OPPORTUNITIES;
+  }
+}
+
+export function getAdminRecommendations(): Recommendation[] {
+  if (typeof window === "undefined") return SEED_RECOMMENDATIONS;
+  try {
+    const raw = localStorage.getItem(KEY_RECOMMENDATIONS);
+    return raw ? JSON.parse(raw) : SEED_RECOMMENDATIONS;
+  } catch {
+    return SEED_RECOMMENDATIONS;
   }
 }
 
@@ -148,4 +159,38 @@ export function generateRecommendationsFromAdminInputs(
   }
 
   return recs;
+}
+
+// Combines direct admin recommendations with dynamically synthesized ones
+export function getAllRecommendations(
+  adminRecs: Recommendation[],
+  partnerships: Partnership[],
+  contracts: ContractItem[],
+  opportunities: Opportunity[]
+): Recommendation[] {
+  const dynamic = generateRecommendationsFromAdminInputs(partnerships, contracts, opportunities);
+  const seenIds = new Set<string>();
+  const combined: Recommendation[] = [];
+
+  // 1. Direct admin recommendations first
+  adminRecs.forEach((r) => {
+    if (!seenIds.has(r.id)) {
+      seenIds.add(r.id);
+      combined.push(r);
+    }
+  });
+
+  // 2. Dynamic recommendations from contracts / partnerships
+  dynamic.forEach((r) => {
+    if (!seenIds.has(r.id) && r.id !== "rec-default") {
+      seenIds.add(r.id);
+      combined.push(r);
+    }
+  });
+
+  if (combined.length === 0) {
+    return dynamic;
+  }
+
+  return combined;
 }

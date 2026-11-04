@@ -17,10 +17,13 @@ import {
   getAdminPartnerships,
   getAdminContracts,
   getAdminOpportunities,
+  getAdminRecommendations,
+  getAllRecommendations,
   generateRecommendationsFromAdminInputs,
   KEY_PARTNERSHIPS,
   KEY_CONTRACTS,
   KEY_OPPORTUNITIES,
+  KEY_RECOMMENDATIONS,
 } from "@/lib/portal-sync";
 import {
   PRIORITY_CONFIG,
@@ -46,6 +49,7 @@ export default function PortalHomeClient() {
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
   const [contracts, setContracts] = useState<ContractItem[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [adminRecs, setAdminRecs] = useState<Recommendation[]>([]);
 
   // Search and filter states
   const [recSearch, setRecSearch] = useState("");
@@ -61,10 +65,12 @@ export default function PortalHomeClient() {
     const currentP = getAdminPartnerships();
     const currentC = getAdminContracts();
     const currentO = getAdminOpportunities();
+    const currentR = getAdminRecommendations();
 
     setPartnerships(currentP);
     setContracts(currentC);
     setOpportunities(currentO);
+    setAdminRecs(currentR);
 
     // 2. If Supabase is available, sync Supabase contracts
     if (isSupabaseConfigured) {
@@ -107,7 +113,8 @@ export default function PortalHomeClient() {
       if (
         e.key === KEY_PARTNERSHIPS ||
         e.key === KEY_CONTRACTS ||
-        e.key === KEY_OPPORTUNITIES
+        e.key === KEY_OPPORTUNITIES ||
+        e.key === KEY_RECOMMENDATIONS
       ) {
         syncFromAdminInputs();
       }
@@ -124,10 +131,10 @@ export default function PortalHomeClient() {
     };
   }, [syncFromAdminInputs]);
 
-  // Dynamically generated recommendations connected directly to admin's partnerships, contracts, & opportunities
+  // Unified recommendations: direct Admin inputs from /dashboard/work + auto-synthesized
   const recommendations: Recommendation[] = useMemo(() => {
-    return generateRecommendationsFromAdminInputs(partnerships, contracts, opportunities);
-  }, [partnerships, contracts, opportunities]);
+    return getAllRecommendations(adminRecs, partnerships, contracts, opportunities);
+  }, [adminRecs, partnerships, contracts, opportunities]);
 
   // Filter recommendations
   const filteredRecs = useMemo(() => {

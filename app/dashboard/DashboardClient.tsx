@@ -64,10 +64,10 @@ export default function DashboardClient() {
       id: "work",
       number: "3",
       title: "شغلي",
-      subtitle: "الشراكات، تعاقدات والفرص",
+      subtitle: "الشراكات، التعاقدات، الفرص والتوصيات",
       href: "/dashboard/work",
       icon: Briefcase,
-      stats: { primary: "٣ شراكات نشطة", secondary: "صفقات جارية" },
+      stats: { primary: "٣ شراكات نشطة", secondary: "توصيات حية مرتبطة بالهوم" },
       colors: {
         glow: "hover:shadow-[0_0_70px_rgba(59,130,246,0.45)] dark:hover:shadow-[0_0_80px_rgba(59,130,246,0.5)]",
         border: "border-blue-300 dark:border-blue-500/40 hover:border-blue-500",

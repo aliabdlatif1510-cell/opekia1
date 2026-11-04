@@ -7,16 +7,9 @@ import {
   FileCheck2,
   TrendingUp,
   Search,
-  DollarSign,
-  Calendar,
-  Building2,
   Sparkles,
-  ChevronLeft,
-  CheckCircle2,
   Clock,
-  Layers,
-  Phone,
-  HelpCircle,
+  CheckCircle2,
 } from "lucide-react";
 import {
   SEED_PARTNERSHIPS,
@@ -30,16 +23,28 @@ import {
   type ContractItem,
   type Opportunity,
 } from "@/lib/work-three";
+import {
+  type Recommendation,
+  PRIORITY_CONFIG,
+  STATUS_CONFIG as REC_STATUS_CONFIG,
+} from "@/lib/recommendations";
+import {
+  getAdminPartnerships,
+  getAdminContracts,
+  getAdminOpportunities,
+  getAdminRecommendations,
+  getAllRecommendations,
+  KEY_PARTNERSHIPS,
+  KEY_CONTRACTS,
+  KEY_OPPORTUNITIES,
+  KEY_RECOMMENDATIONS,
+} from "@/lib/portal-sync";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-
-const KEY_P = "opekia_work_partnerships";
-const KEY_C = "opekia_work_contracts_v2";
-const KEY_O = "opekia_work_opportunities";
 
 const money = (n: number) =>
   n.toLocaleString("ar-EG", { style: "currency", currency: "EGP", maximumFractionDigits: 0 });
 
-type ActiveSection = "partnerships" | "contracts" | "opportunities";
+type ActiveSection = "partnerships" | "contracts" | "opportunities" | "recommendations";
 
 export default function PortalWorkClient() {
   const searchParams = useSearchParams();
@@ -51,7 +56,12 @@ export default function PortalWorkClient() {
   useEffect(() => {
     if (!searchParams) return;
     const tab = searchParams.get("tab");
-    if (tab === "partnerships" || tab === "contracts" || tab === "opportunities") {
+    if (
+      tab === "partnerships" ||
+      tab === "contracts" ||
+      tab === "opportunities" ||
+      tab === "recommendations"
+    ) {
       setActiveTab(tab);
     }
   }, [searchParams]);
@@ -59,24 +69,72 @@ export default function PortalWorkClient() {
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
   const [contracts, setContracts] = useState<ContractItem[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [adminRecs, setAdminRecs] = useState<Recommendation[]>([]);
 
-  useEffect(() => {
-    setMounted(true);
+  const loadData = () => {
     if (typeof window !== "undefined") {
       try {
-        const rawP = localStorage.getItem(KEY_P);
-        setPartnerships(rawP ? JSON.parse(rawP) : SEED_PARTNERSHIPS);
-
-        const rawC = localStorage.getItem(KEY_C);
-        setContracts(rawC ? JSON.parse(rawC) : SEED_CONTRACTS);
-
-        const rawO = localStorage.getItem(KEY_O);
-        setOpportunities(rawO ? JSON.parse(rawO) : SEED_OPPORTUNITIES);
+        setPartnerships(getAdminPartnerships());
+        setContracts(getAdminContracts());
+        setOpportunities(getAdminOpportunities());
+        setAdminRecs(getAdminRecommendations());
       } catch (e) {
         console.error("Failed to load work data:", e);
       }
     }
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    loadData();
+
+    const handleUpdate = () => loadData();
+    window.addEventListener("opekia_data_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+
+    // If Supabase is available, sync Supabase contracts
+    if (isSupabaseConfigured) {
+      (async () => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: dbContracts } = await supabase
+              .from("contracts")
+              .select("*")
+              .eq("user_id", user.id);
+
+            if (dbContracts && dbContracts.length > 0) {
+              const mappedContracts: ContractItem[] = dbContracts.map((dc: any) => ({
+                id: dc.id,
+                title: dc.title,
+                party: dc.partner || "طرف متعاقد",
+                value: Number(dc.value) || 0,
+                startDate: dc.start_date || "",
+                endDate: dc.end_date || "",
+                progress: Number(dc.progress) || 0,
+                status: (dc.status as "active" | "review" | "expired") || "active",
+                notes: dc.notes || "",
+              }));
+              setContracts(mappedContracts);
+            }
+          }
+        } catch (err) {
+          console.warn("Supabase portal contracts note:", err);
+        }
+      })();
+    }
+
+    return () => {
+      window.removeEventListener("opekia_data_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+    };
   }, []);
+
+  const recommendations: Recommendation[] = useMemo(() => {
+    return getAllRecommendations(adminRecs, partnerships, contracts, opportunities);
+  }, [adminRecs, partnerships, contracts, opportunities]);
 
   // Filtered items based on search query
   const filteredPartnerships = useMemo(() => {
@@ -112,7 +170,19 @@ export default function PortalWorkClient() {
     );
   }, [opportunities, searchQuery]);
 
-  // Statistics
+  const filteredRecommendations = useMemo(() => {
+    if (!searchQuery.trim()) return recommendations;
+    const q = searchQuery.toLowerCase();
+    return recommendations.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        r.category.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        r.impact.toLowerCase().includes(q)
+    );
+  }, [recommendations, searchQuery]);
+
+  // High-level statistics
   const stats = useMemo(() => {
     const totalP = partnerships.length;
     const activeP = partnerships.filter((p) => p.status === "active").length;
@@ -125,8 +195,11 @@ export default function PortalWorkClient() {
     const totalO = opportunities.length;
     const totalOValue = opportunities.reduce((acc, o) => acc + (o.estimatedValue || 0), 0);
 
-    return { totalP, activeP, totalC, totalCValue, avgCProgress, totalO, totalOValue };
-  }, [partnerships, contracts, opportunities]);
+    const totalR = recommendations.length;
+    const activeR = recommendations.filter((r) => r.status === "active").length;
+
+    return { totalP, activeP, totalC, totalCValue, avgCProgress, totalO, totalOValue, totalR, activeR };
+  }, [partnerships, contracts, opportunities, recommendations]);
 
   if (!mounted) {
     return (
@@ -146,16 +219,16 @@ export default function PortalWorkClient() {
             <span>سجلات الأعمال والخدمات (اطلاع فقط)</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-            شغلي — الشراكات، التعاقدات والفرص
+            شغلي — الشراكات، التعاقدات، الفرص والتوصيات
           </h1>
           <p className="mt-1 text-xs md:text-sm text-slate-500 dark:text-slate-400">
-            تابع تفاصيل العقود والمشاريع المعتمدة في حسابك بكل دقة، بدون أي تعقيد.
+            سجلات ومؤشرات حية مربوطة مباشرة بمدخلات الإدارة المركزية
           </p>
         </div>
       </div>
 
-      {/* 3 Executive Hub Cards (Read-Only: Click to switch tab, no create buttons) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* 4 Executive Hub Cards (Read-Only: Click to switch tab) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 1. الشراكات */}
         <div
           onClick={() => setActiveTab("partnerships")}
@@ -245,14 +318,44 @@ export default function PortalWorkClient() {
             </div>
           </div>
         </div>
+
+        {/* 4. التوصيات */}
+        <div
+          onClick={() => setActiveTab("recommendations")}
+          className={`cursor-pointer rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 ${
+            activeTab === "recommendations"
+              ? "border-purple-500 bg-purple-500/10 shadow-purple-500/10 ring-2 ring-purple-500/30"
+              : "border-slate-200 bg-white hover:border-purple-400 dark:border-white/10 dark:bg-slate-900/60"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white shadow-md shadow-purple-500/30">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">التوصيات</h3>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {stats.activeR} نشطة للمتابعة
+                </span>
+              </div>
+            </div>
+            <div className="text-end">
+              <span className="text-xs font-black text-purple-600 dark:text-purple-400 block">
+                {stats.totalR}
+              </span>
+              <span className="text-[10px] text-slate-400">توصية حية</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tabs and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-2 rounded-2xl bg-slate-100 p-1.5 dark:bg-white/5">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-slate-100 p-1.5 dark:bg-white/5">
           <button
             onClick={() => setActiveTab("partnerships")}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
               activeTab === "partnerships"
                 ? "bg-white text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-400"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
@@ -264,7 +367,7 @@ export default function PortalWorkClient() {
 
           <button
             onClick={() => setActiveTab("contracts")}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
               activeTab === "contracts"
                 ? "bg-white text-emerald-600 shadow-sm dark:bg-slate-800 dark:text-emerald-400"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
@@ -276,7 +379,7 @@ export default function PortalWorkClient() {
 
           <button
             onClick={() => setActiveTab("opportunities")}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition ${
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
               activeTab === "opportunities"
                 ? "bg-white text-amber-600 shadow-sm dark:bg-slate-800 dark:text-amber-400"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
@@ -284,6 +387,18 @@ export default function PortalWorkClient() {
           >
             <TrendingUp size={14} />
             <span>الفرص ({filteredOpportunities.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("recommendations")}
+            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+              activeTab === "recommendations"
+                ? "bg-white text-purple-600 shadow-sm dark:bg-slate-800 dark:text-purple-400"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            }`}
+          >
+            <Sparkles size={14} />
+            <span>التوصيات ({filteredRecommendations.length})</span>
           </button>
         </div>
 
@@ -340,17 +455,13 @@ export default function PortalWorkClient() {
                         {p.name}
                       </h3>
 
-                      <div className="mt-3 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
-                        <div className="flex items-center gap-1.5">
-                          <Building2 size={13} className="text-slate-400" />
-                          <span>مجال العمل: {p.field}</span>
-                        </div>
-                        {p.contact && (
-                          <div className="flex items-center gap-1.5">
-                            <Phone size={13} className="text-slate-400" />
-                            <span>المسؤول: {p.contact}</span>
-                          </div>
-                        )}
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {p.field}
+                      </p>
+
+                      <div className="mt-3 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 dark:border-white/5 pt-2">
+                        <span>مسؤول التواصل:</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">{p.contact}</span>
                       </div>
 
                       {p.notes && (
@@ -388,7 +499,7 @@ export default function PortalWorkClient() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredContracts.map((c) => {
                 const statusMeta = CONTRACT_STATUS[c.status] || {
                   label: c.status,
@@ -403,7 +514,7 @@ export default function PortalWorkClient() {
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                          الطرف المنفذ: {c.party}
+                          الطرف: {c.party}
                         </span>
                         <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${statusMeta.style}`}>
                           {statusMeta.label}
@@ -414,9 +525,8 @@ export default function PortalWorkClient() {
                         {c.title}
                       </h3>
 
-                      {/* Financial Value */}
                       <div className="mt-3 flex items-center justify-between text-xs">
-                        <span className="text-slate-500">القيمة المالية للعقد:</span>
+                        <span className="text-slate-500">القيمة التعاقدية:</span>
                         <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
                           {money(c.value)}
                         </span>
@@ -428,24 +538,17 @@ export default function PortalWorkClient() {
                           <span className="text-slate-500">نسبة الإنجاز</span>
                           <span className="font-bold text-slate-900 dark:text-white">{c.progress}%</span>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                        <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                             style={{ width: `${c.progress}%` }}
                           />
                         </div>
                       </div>
 
-                      {/* Dates */}
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
-                        <div className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          <span>البدء: {c.startDate}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock size={12} />
-                          <span>الانتهاء: {c.endDate}</span>
-                        </div>
+                      <div className="mt-3 text-xs text-slate-500 flex items-center gap-1">
+                        <Clock size={12} />
+                        <span>{c.startDate} ← {c.endDate}</span>
                       </div>
 
                       {c.notes && (
@@ -458,7 +561,7 @@ export default function PortalWorkClient() {
                     <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
                       <span className="flex items-center gap-1">
                         <CheckCircle2 size={12} className="text-emerald-500" />
-                        عقد رسمي معتمد
+                        اتفاقية سارية
                       </span>
                       <span className="font-mono text-[10px]">ID: {c.id}</span>
                     </div>
@@ -479,26 +582,26 @@ export default function PortalWorkClient() {
             <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-white/10">
               <TrendingUp className="mx-auto text-slate-400 mb-2" size={32} />
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                لا توجد فرص مسجلة تطابق البحث
+                لا توجد فرص تجارية مسجلة تطابق البحث
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredOpportunities.map((o) => {
-                const stageMeta = STAGE_CONFIG[o.stage] || {
-                  label: o.stage,
+              {filteredOpportunities.map((op) => {
+                const stageMeta = STAGE_CONFIG[op.stage] || {
+                  label: op.stage,
                   style: "bg-slate-100 text-slate-600",
                 };
 
                 return (
                   <div
-                    key={o.id}
+                    key={op.id}
                     className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:border-amber-500/30 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                          العميل: {o.client}
+                          العميل: {op.client}
                         </span>
                         <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${stageMeta.style}`}>
                           {stageMeta.label}
@@ -506,13 +609,13 @@ export default function PortalWorkClient() {
                       </div>
 
                       <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                        {o.title}
+                        {op.title}
                       </h3>
 
                       <div className="mt-3 flex items-center justify-between text-xs">
                         <span className="text-slate-500">القيمة المتوقعة:</span>
                         <span className="text-sm font-black text-amber-600 dark:text-amber-400">
-                          {money(o.estimatedValue)}
+                          {money(op.estimatedValue)}
                         </span>
                       </div>
 
@@ -520,24 +623,24 @@ export default function PortalWorkClient() {
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs mb-1">
                           <span className="text-slate-500">احتمالية الإغلاق</span>
-                          <span className="font-bold text-slate-900 dark:text-white">{o.probability}%</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{op.probability}%</span>
                         </div>
                         <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
                           <div
                             className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                            style={{ width: `${o.probability}%` }}
+                            style={{ width: `${op.probability}%` }}
                           />
                         </div>
                       </div>
 
                       <div className="mt-3 text-xs text-slate-500 flex items-center gap-1">
                         <Clock size={12} />
-                        <span>الإغلاق المتوقع: {o.expectedClose}</span>
+                        <span>الإغلاق المتوقع: {op.expectedClose}</span>
                       </div>
 
-                      {o.notes && (
+                      {op.notes && (
                         <p className="mt-3 rounded-xl bg-slate-50 dark:bg-white/5 p-2.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                          {o.notes}
+                          {op.notes}
                         </p>
                       )}
                     </div>
@@ -547,7 +650,70 @@ export default function PortalWorkClient() {
                         <CheckCircle2 size={12} className="text-amber-500" />
                         فرصة مسجلة
                       </span>
-                      <span className="font-mono text-[10px]">ID: {o.id}</span>
+                      <span className="font-mono text-[10px]">ID: {op.id}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB 4: التوصيات (Read-Only) */}
+      {/* =================================================================== */}
+      {activeTab === "recommendations" && (
+        <div className="space-y-4">
+          {filteredRecommendations.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center dark:border-white/10">
+              <Sparkles className="mx-auto text-purple-400 mb-2" size={32} />
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                لا توجد توصيات مسجلة تطابق البحث
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredRecommendations.map((r) => {
+                const priorityCfg = PRIORITY_CONFIG[r.priority] || PRIORITY_CONFIG.normal;
+                const statusCfg = REC_STATUS_CONFIG[r.status] || REC_STATUS_CONFIG.active;
+
+                return (
+                  <div
+                    key={r.id}
+                    className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all hover:border-purple-500/30 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <span className="inline-block rounded-lg bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">
+                          {r.category}
+                        </span>
+                        <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${priorityCfg.style}`}>
+                          {priorityCfg.label}
+                        </span>
+                      </div>
+
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2">
+                        {r.title}
+                      </h3>
+
+                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                        {r.description}
+                      </p>
+
+                      {r.impact && (
+                        <div className="mt-3 rounded-xl bg-purple-50/60 p-2 text-xs dark:bg-purple-950/20">
+                          <span className="font-bold text-purple-700 dark:text-purple-300">الأثر: </span>
+                          <span className="text-slate-600 dark:text-slate-300">{r.impact}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-400">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusCfg.style}`}>
+                        {statusCfg.label}
+                      </span>
+                      <span className="font-mono text-[10px]">{r.date}</span>
                     </div>
                   </div>
                 );
