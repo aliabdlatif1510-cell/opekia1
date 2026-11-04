@@ -254,30 +254,18 @@ export default function PortalWorkClient() {
                   <div
                     key={rec.id}
                     onClick={() => openRecommendation(rec)}
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-purple-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-purple-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
                   >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 mt-0.5 group-hover:scale-105 transition-transform">
-                        <Sparkles size={16} />
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-105 transition-transform">
+                        <Sparkles size={18} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-black text-sm text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors line-clamp-2">
+                        <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors line-clamp-1">
                           {rec.title}
                         </h3>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                          {rec.description}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                          <span className="rounded-md bg-purple-500/10 px-2 py-0.5 font-bold text-purple-600 dark:text-purple-400">
-                            {rec.category || "توصية تنفيذية"}
-                          </span>
-                          <span>•</span>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
                           <span>📅 {rec.date}</span>
-                          <span>•</span>
-                          <span className="text-purple-600 font-bold inline-flex items-center gap-1 group-hover:underline">
-                            <Eye size={12} />
-                            <span>فتح الرسالة</span>
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -289,7 +277,7 @@ export default function PortalWorkClient() {
                         e.stopPropagation();
                         toggleInterest(rec.id);
                       }}
-                      className={`shrink-0 self-end sm:self-center flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
+                      className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
                         isInterested
                           ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
                           : "bg-purple-600 text-white shadow-md shadow-purple-500/25 hover:bg-purple-500 active:scale-95"
@@ -345,11 +333,11 @@ export default function PortalWorkClient() {
                   <div
                     key={item.id}
                     onClick={() => openOpportunity(item)}
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-amber-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-amber-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
                   >
-                    <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex items-center gap-3.5 min-w-0">
                       <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl mt-0.5 group-hover:scale-105 transition-transform ${
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl group-hover:scale-105 transition-transform ${
                           isContract
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             : isPartnership
@@ -358,33 +346,19 @@ export default function PortalWorkClient() {
                         }`}
                       >
                         {isContract ? (
-                          <FileCheck2 size={16} />
+                          <FileCheck2 size={18} />
                         ) : isPartnership ? (
-                          <Handshake size={16} />
+                          <Handshake size={18} />
                         ) : (
-                          <TrendingUp size={16} />
+                          <TrendingUp size={18} />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-black text-sm text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors line-clamp-2">
+                        <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors line-clamp-1">
                           {item.title}
                         </h3>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                          {item.notes}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                          <span
-                            className={`rounded-md px-2 py-0.5 font-bold border ${item.sourceBadgeStyle}`}
-                          >
-                            {item.sourceLabel}
-                          </span>
-                          <span>•</span>
+                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
                           <span>📅 {item.date}</span>
-                          <span>•</span>
-                          <span className="text-amber-600 font-bold inline-flex items-center gap-1 group-hover:underline">
-                            <Eye size={12} />
-                            <span>فتح الرسالة</span>
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -396,7 +370,7 @@ export default function PortalWorkClient() {
                         e.stopPropagation();
                         toggleInterest(item.id);
                       }}
-                      className={`shrink-0 self-end sm:self-center flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
+                      className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
                         isInterested
                           ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
                           : "bg-amber-500 text-white shadow-md shadow-amber-500/25 hover:bg-amber-400 active:scale-95"
