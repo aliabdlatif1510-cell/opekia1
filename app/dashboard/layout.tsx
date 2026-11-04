@@ -100,19 +100,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (!mounted || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#07090E]">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-          <span className="font-mono text-xs tracking-widest text-slate-500">OPEKIA // BOOTING</span>
+          <span className="font-mono text-xs tracking-widest text-slate-500">OPEKIA</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-[#07090E] dark:text-slate-100 md:flex-row">
-      {/* Sidebar with Architectural Precision */}
-      <aside className="border-b border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#090D15]/80 md:min-h-screen md:w-64 md:border-b-0 md:border-e">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100 md:flex-row">
+      {/* Sidebar */}
+      <aside className="border-b border-slate-200/80 bg-white/80 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-navy-900/80 md:min-h-screen md:w-64 md:border-b-0 md:border-e">
         {/* Brand Monogram */}
         <div className="flex items-center justify-between pb-6 border-b border-slate-200/60 dark:border-white/[0.06]">
           <Link href="/dashboard" className="flex items-center gap-2.5">
@@ -173,7 +173,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main View Area */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Minimalist Executive Header */}
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/80 bg-white/70 px-6 py-3.5 backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#07090E]/70 md:px-10">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-200/80 bg-white/70 px-6 py-3.5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 md:px-10">
           <div className="flex items-center gap-3">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
             <div className="text-xs text-slate-600 dark:text-slate-400">

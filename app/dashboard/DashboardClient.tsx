@@ -1,161 +1,190 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Users, Home, Briefcase, ChevronLeft, Sparkles, ArrowDown, ShieldCheck, Compass } from "lucide-react";
+import {
+  Users,
+  Home,
+  Briefcase,
+  ChevronLeft,
+  Sparkles,
+  Heart,
+  TrendingUp,
+  Shield,
+  ArrowUpRight,
+  Activity,
+  Layers,
+} from "lucide-react";
 
 export default function DashboardClient() {
+  const [hoveredHub, setHoveredHub] = useState<string | null>(null);
+
   const hubs = [
     {
       id: "family",
-      index: "01",
-      code: "FAMILY // HUB",
+      number: "1",
       title: "عائلتي",
-      summary: "الأجندة • المهام • الأرشيف المشفّر",
+      subtitle: "المناسبات، الأجندة والوثائق",
       href: "/dashboard/family",
       icon: Users,
-      theme: {
-        aura: "group-hover:shadow-[0_0_80px_-15px_rgba(244,63,94,0.45)]",
-        border: "border-rose-500/20 group-hover:border-rose-500/60 dark:border-rose-500/30",
-        ringBorder: "border-rose-500/30",
-        indexText: "text-rose-500 dark:text-rose-400",
-        dotBg: "bg-rose-500",
-        iconGlow: "from-rose-500 to-pink-600 text-white shadow-rose-500/40",
-        titleHover: "group-hover:text-rose-600 dark:group-hover:text-rose-400",
-        lensCore: "from-rose-500/[0.08] via-pink-500/[0.03] to-transparent",
-        satellite: "border-rose-400 bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.8)]",
+      stats: { primary: "٤ أفراد", secondary: "مناسبة قادمة" },
+      colors: {
+        glow: "hover:shadow-[0_0_70px_rgba(236,72,153,0.45)] dark:hover:shadow-[0_0_80px_rgba(244,63,94,0.5)]",
+        border: "border-pink-300 dark:border-pink-500/40 hover:border-pink-500",
+        numberBg: "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-lg shadow-pink-500/40",
+        iconBg: "from-pink-500 to-rose-600 text-white shadow-xl shadow-pink-500/35",
+        text: "text-slate-900 dark:text-white group-hover:text-pink-600 dark:group-hover:text-pink-400",
+        gradient: "from-pink-500/10 via-rose-500/[0.04] to-transparent",
+        ambientGlow: "bg-pink-500/20 dark:bg-pink-500/25",
+        pill: "bg-pink-50 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300 border-pink-200 dark:border-pink-500/20",
+        ringColor: "stroke-pink-500",
       },
     },
     {
       id: "home",
-      index: "02",
-      code: "HOME // DOMAIN",
+      number: "2",
       title: "بيتي",
-      summary: "المصروفات • الفواتير • الصيانة الذكية",
+      subtitle: "المصروفات، الفواتير والصيانة",
       href: "/dashboard/home",
       icon: Home,
-      theme: {
-        aura: "group-hover:shadow-[0_0_80px_-15px_rgba(16,185,129,0.45)]",
-        border: "border-emerald-500/20 group-hover:border-emerald-500/60 dark:border-emerald-500/30",
-        ringBorder: "border-emerald-500/30",
-        indexText: "text-emerald-500 dark:text-emerald-400",
-        dotBg: "bg-emerald-500",
-        iconGlow: "from-emerald-500 to-teal-600 text-white shadow-emerald-500/40",
-        titleHover: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
-        lensCore: "from-emerald-500/[0.08] via-teal-500/[0.03] to-transparent",
-        satellite: "border-emerald-400 bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]",
+      stats: { primary: "ميزانية مستقرة", secondary: "صيانة مجدولة" },
+      colors: {
+        glow: "hover:shadow-[0_0_70px_rgba(16,185,129,0.45)] dark:hover:shadow-[0_0_80px_rgba(16,185,129,0.5)]",
+        border: "border-emerald-300 dark:border-emerald-500/40 hover:border-emerald-500",
+        numberBg: "bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/40",
+        iconBg: "from-emerald-500 to-teal-600 text-white shadow-xl shadow-emerald-500/35",
+        text: "text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400",
+        gradient: "from-emerald-500/10 via-teal-500/[0.04] to-transparent",
+        ambientGlow: "bg-emerald-500/20 dark:bg-emerald-500/25",
+        pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20",
+        ringColor: "stroke-emerald-500",
       },
     },
     {
       id: "work",
-      index: "03",
-      code: "WORK // VENTURE",
+      number: "3",
       title: "شغلي",
-      summary: "الشراكات • تعاقدات • مسار الفرص",
+      subtitle: "الشراكات، تعاقدات والفرص",
       href: "/dashboard/work",
       icon: Briefcase,
-      theme: {
-        aura: "group-hover:shadow-[0_0_80px_-15px_rgba(59,130,246,0.45)]",
-        border: "border-blue-500/20 group-hover:border-blue-500/60 dark:border-blue-500/30",
-        ringBorder: "border-blue-500/30",
-        indexText: "text-blue-500 dark:text-blue-400",
-        dotBg: "bg-blue-500",
-        iconGlow: "from-blue-500 to-indigo-600 text-white shadow-blue-500/40",
-        titleHover: "group-hover:text-blue-600 dark:group-hover:text-blue-400",
-        lensCore: "from-blue-500/[0.08] via-indigo-500/[0.03] to-transparent",
-        satellite: "border-blue-400 bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.8)]",
+      stats: { primary: "٣ شراكات نشطة", secondary: "صفقات جارية" },
+      colors: {
+        glow: "hover:shadow-[0_0_70px_rgba(59,130,246,0.45)] dark:hover:shadow-[0_0_80px_rgba(59,130,246,0.5)]",
+        border: "border-blue-300 dark:border-blue-500/40 hover:border-blue-500",
+        numberBg: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/40",
+        iconBg: "from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/35",
+        text: "text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400",
+        gradient: "from-blue-500/10 via-indigo-500/[0.04] to-transparent",
+        ambientGlow: "bg-blue-500/20 dark:bg-blue-500/25",
+        pill: "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
+        ringColor: "stroke-blue-500",
       },
     },
   ];
 
   return (
-    <main className="relative flex min-h-[calc(100vh-140px)] w-full flex-col items-center justify-center overflow-hidden py-12">
-      {/* Architectural Background Grid with Radial Vignette */}
-      <div className="pointer-events-none absolute inset-0 bg-grid-pattern-light opacity-60 dark:bg-grid-pattern dark:opacity-40" />
-      <div className="pointer-events-none absolute inset-0 bg-radial-vignette from-transparent via-slate-50/70 to-slate-100 dark:via-[#07090e]/70 dark:to-[#07090e]" />
+    <main className="relative flex min-h-[calc(100vh-140px)] w-full flex-col items-center justify-center overflow-hidden py-10">
+      {/* Dynamic Ambient Color Orbs that React to Hover */}
+      <div
+        className={`pointer-events-none absolute -top-20 start-1/2 h-96 w-96 -translate-x-1/2 rounded-full blur-[140px] transition-all duration-700 ${
+          hoveredHub === "family"
+            ? "bg-pink-500/30 scale-125"
+            : hoveredHub === "home"
+            ? "bg-emerald-500/30 scale-125"
+            : hoveredHub === "work"
+            ? "bg-blue-600/30 scale-125"
+            : "bg-pink-500/15"
+        }`}
+      />
+      <div className="pointer-events-none absolute top-1/2 start-1/4 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/15 blur-[140px]" />
+      <div className="pointer-events-none absolute bottom-0 end-1/4 h-96 w-96 rounded-full bg-blue-600/15 blur-[140px]" />
 
-      {/* Atmospheric Spatial Aura Fields */}
-      <div className="pointer-events-none absolute -top-32 start-1/2 h-[550px] w-[550px] -translate-x-1/2 rounded-full bg-rose-500/[0.06] blur-[150px] dark:bg-rose-500/[0.08]" />
-      <div className="pointer-events-none absolute top-1/2 start-1/2 h-[550px] w-[550px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/[0.06] blur-[150px] dark:bg-emerald-500/[0.08]" />
-      <div className="pointer-events-none absolute -bottom-32 start-1/2 h-[550px] w-[550px] -translate-x-1/2 rounded-full bg-blue-600/[0.06] blur-[150px] dark:bg-blue-600/[0.08]" />
-
-      {/* Sleek Executive Status & Wish Shortcut */}
-      <div className="relative z-10 mb-10 flex flex-wrap items-center justify-center gap-3">
-        <div className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/70 px-3.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#0c1220]/70 dark:text-slate-300">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-          <span>المساحة الذكية النشطة</span>
-          <span className="text-slate-300 dark:text-slate-600">•</span>
-          <span className="font-mono text-[10px] text-slate-400">OPEKIA // SPATIAL v2</span>
-        </div>
-
+      {/* Top Floating Badge for "نفسك في إيه؟" */}
+      <div className="relative z-10 mb-8">
         <Link
           href="/dashboard/wishes"
-          className="group flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/70 px-4 py-1.5 text-xs font-bold text-slate-800 shadow-sm backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-700 dark:border-white/10 dark:bg-[#0c1220]/70 dark:text-slate-200 dark:hover:border-emerald-400/40 dark:hover:text-emerald-400"
+          className="group inline-flex items-center gap-2.5 rounded-full border border-emerald-500/30 bg-white/80 px-5 py-2 text-xs font-black text-slate-800 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500 hover:bg-emerald-500/15 hover:shadow-emerald-500/20 dark:border-white/15 dark:bg-navy-800/80 dark:text-white dark:hover:border-emerald-400"
         >
-          <Sparkles size={13} className="text-emerald-500 transition-transform duration-300 group-hover:scale-125" />
-          <span>نفسك في إيه؟</span>
-          <ChevronLeft size={13} className="text-slate-400 transition-transform duration-300 group-hover:-translate-x-1 dark:text-slate-500" />
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md shadow-emerald-500/30 transition group-hover:rotate-12">
+            <Sparkles size={13} />
+          </span>
+          <span className="text-slate-600 dark:text-slate-300">مساحة الأفكار:</span>
+          <strong className="text-emerald-600 dark:text-emerald-400">نفسك في إيه؟</strong>
+          <ChevronLeft size={14} className="text-slate-400 transition group-hover:-translate-x-1 dark:text-slate-500" />
         </Link>
       </div>
 
-      {/* Main Spatial Sphere Array */}
-      <div className="relative z-10 flex w-full max-w-lg flex-col items-center">
-        {/* Kinetic Optical Waveguide Spine with Flowing Photon Beam */}
-        <div className="pointer-events-none absolute top-16 bottom-16 w-[1.5px] bg-gradient-to-b from-rose-500/30 via-emerald-500/30 to-blue-500/30 dark:from-rose-500/20 dark:via-emerald-500/20 dark:to-blue-500/20">
-          <div className="h-20 w-full animate-laser bg-gradient-to-b from-transparent via-white to-transparent dark:via-emerald-400" />
-        </div>
+      {/* Main Container */}
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center">
+        {/* Luminous Animated Connecting Line */}
+        <div className="pointer-events-none absolute top-16 bottom-16 w-1 rounded-full bg-gradient-to-b from-pink-500 via-emerald-500 to-blue-500 opacity-30 shadow-[0_0_15px_rgba(16,185,129,0.5)] dark:opacity-40" />
 
-        {/* Vertical Order of Spheres */}
-        <div className="relative flex w-full flex-col items-center gap-10">
+        {/* 3 Circular Portals in Vertical Order */}
+        <div className="relative flex w-full flex-col items-center gap-7">
           {hubs.map((hub) => {
             const Icon = hub.icon;
+            const isHovered = hoveredHub === hub.id;
+
             return (
-              <div key={hub.id} className="relative flex items-center justify-center">
-                {/* Outer Precision Instrument Ring with Calibration Ticks */}
+              <div
+                key={hub.id}
+                onMouseEnter={() => setHoveredHub(hub.id)}
+                onMouseLeave={() => setHoveredHub(null)}
+                className="relative flex items-center justify-center"
+              >
+                {/* Luminous Ambient Glow Behind Each Circle */}
                 <div
-                  className={`pointer-events-none absolute -inset-3.5 rounded-full border border-dashed ${hub.theme.ringBorder} opacity-40 transition-all duration-700 group-hover:opacity-100 group-hover:scale-105`}
+                  className={`pointer-events-none absolute inset-0 rounded-full blur-2xl transition-all duration-500 ${
+                    hub.colors.ambientGlow
+                  } ${isHovered ? "opacity-100 scale-110" : "opacity-40 scale-95"}`}
                 />
 
-                {/* Main Interactive Tactile Sphere */}
+                {/* The Circular Button / Portal */}
                 <Link
                   href={hub.href}
-                  className={`group relative flex h-52 w-52 flex-col items-center justify-center rounded-full border bg-gradient-to-b ${hub.theme.lensCore} ${hub.theme.border} bg-white/75 p-5 text-center shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:-translate-y-1.5 hover:scale-105 active:scale-95 dark:bg-[#0c1220]/80 ${hub.theme.aura} specular-lens-light dark:specular-lens sm:h-60 sm:w-60`}
+                  className={`group relative flex h-52 w-52 flex-col items-center justify-center rounded-full border-2 bg-gradient-to-b ${hub.colors.gradient} ${hub.colors.border} bg-white/90 p-4 text-center shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 active:scale-95 dark:bg-navy-800/90 ${hub.colors.glow} sm:h-56 sm:w-56`}
                 >
-                  {/* Internal Specular Highlight Arc */}
-                  <div className="pointer-events-none absolute inset-1.5 rounded-full border border-white/60 dark:border-white/10" />
+                  {/* Inner Specular Ring */}
+                  <div className="pointer-events-none absolute inset-1.5 rounded-full border border-white/70 dark:border-white/10" />
 
-                  {/* Micro Index Monospace Tag */}
-                  <div className="absolute top-4 flex items-center gap-1.5">
-                    <span className={`font-mono text-[11px] font-black tracking-widest ${hub.theme.indexText}`}>
-                      {hub.index}
-                    </span>
-                    <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase dark:text-slate-500">
-                      {hub.code}
-                    </span>
-                  </div>
-
-                  {/* Tactile Icon Reticle */}
+                  {/* Elegant Number Badge (1, 2, 3) */}
                   <div
-                    className={`relative mb-2 mt-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br shadow-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${hub.theme.iconGlow} sm:h-16 sm:w-16`}
+                    className={`absolute -top-2 start-1/2 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full text-xs font-black ring-4 ring-white dark:ring-navy-900 ${hub.colors.numberBg}`}
                   >
-                    <Icon size={28} className="sm:size-8" />
+                    {hub.number}
                   </div>
 
-                  {/* Monumental Modern Arabic Title */}
+                  {/* Icon Capsule with Radiant Gradient */}
+                  <div
+                    className={`relative mb-2 mt-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br shadow-lg transition-all duration-500 group-hover:scale-115 group-hover:rotate-6 ${hub.colors.iconBg} sm:h-15 sm:w-15`}
+                  >
+                    <Icon size={28} className="sm:size-7" />
+                  </div>
+
+                  {/* Bold Arabic Title */}
                   <h2
-                    className={`text-2xl font-black tracking-tight text-slate-900 transition-colors duration-300 dark:text-white sm:text-3xl ${hub.theme.titleHover}`}
+                    className={`text-2xl font-black tracking-tight transition-colors duration-300 sm:text-3xl ${hub.colors.text}`}
                   >
                     {hub.title}
                   </h2>
 
-                  {/* Executive Telemetry Summary */}
-                  <p className="mt-1 line-clamp-1 max-w-[88%] text-[10px] font-bold text-slate-500 transition-colors duration-300 dark:text-slate-400 sm:text-[11px]">
-                    {hub.summary}
+                  {/* Subtitle */}
+                  <p className="mt-1 line-clamp-1 max-w-[85%] text-[11px] font-semibold text-slate-500 transition-colors duration-300 dark:text-slate-400 sm:text-xs">
+                    {hub.subtitle}
                   </p>
 
-                  {/* Minimalist Micro Action Target */}
-                  <div className="mt-2 flex items-center gap-1.5 rounded-full border border-slate-200/60 bg-white/40 px-3 py-0.5 text-[10px] font-extrabold text-slate-600 opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-                    <span>دخول المحور</span>
-                    <ChevronLeft size={11} className="transition-transform group-hover:-translate-x-0.5" />
+                  {/* Micro Live Pill */}
+                  <div
+                    className={`mt-2 flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-black transition-all duration-300 ${hub.colors.pill}`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-current animate-pulse" />
+                    <span>{hub.stats.primary}</span>
+                  </div>
+
+                  {/* Enter Indicator on Hover */}
+                  <div className="absolute -bottom-3 flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-[10px] font-black text-white opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 group-hover:-translate-y-1 dark:bg-white dark:text-slate-900">
+                    <span>دخول</span>
+                    <ChevronLeft size={11} />
                   </div>
                 </Link>
               </div>
