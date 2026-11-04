@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, type ReactNode } from "react";
-import { Briefcase, Users, Home, Moon, Sun, LogOut, Sparkles } from "lucide-react";
+import { LayoutDashboard, Briefcase, Users, Home, Moon, Sun, LogOut, Sparkles } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const NAV = [
+  { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/work", label: "شغلي", icon: Briefcase },
   { href: "/dashboard/family", label: "عائلتي", icon: Users },
   { href: "/dashboard/home", label: "بيتي", icon: Home },
@@ -102,8 +103,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           أوبكيا | Opekia
         </div>
         <nav className="mt-2 flex gap-2 overflow-x-auto md:flex-col">
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname.startsWith(href);
+          {NAV.map(({ href, label, icon: Icon, exact }) => {
+            const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <Link
                 key={href}
