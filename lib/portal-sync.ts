@@ -2,6 +2,10 @@ import {
   SEED_PARTNERSHIPS,
   SEED_CONTRACTS,
   SEED_OPPORTUNITIES,
+  PARTNERSHIP_STATUS,
+  PARTNERSHIP_TYPES,
+  CONTRACT_STATUS,
+  STAGE_CONFIG,
   type Partnership,
   type ContractItem,
   type Opportunity,
@@ -57,7 +61,7 @@ export function getAdminRecommendations(): Recommendation[] {
 const money = (n: number) =>
   n.toLocaleString("ar-EG", { style: "currency", currency: "EGP", maximumFractionDigits: 0 });
 
-// Dynamically synthesize recommendations directly linked to the admin's partnerships and contracts
+// Dynamically synthesize recommendations directly linked to the admin's partnerships, contracts, and opportunities
 export function generateRecommendationsFromAdminInputs(
   partnerships: Partnership[],
   contracts: ContractItem[],
@@ -128,7 +132,7 @@ export function generateRecommendationsFromAdminInputs(
     }
   });
 
-  // 3. Strategic Recommendations derived from high-value Opportunities (الفرص)
+  // 3. Strategic Recommendations derived from Opportunities (الفرص)
   opportunities.forEach((o, idx) => {
     if (o.stage === "proposal" || o.stage === "negotiation") {
       recs.push({
@@ -180,7 +184,7 @@ export function getAllRecommendations(
     }
   });
 
-  // 2. Dynamic recommendations from contracts / partnerships
+  // 2. Dynamic recommendations from contracts / partnerships / opportunities
   dynamic.forEach((r) => {
     if (!seenIds.has(r.id) && r.id !== "rec-default") {
       seenIds.add(r.id);
@@ -193,4 +197,110 @@ export function getAllRecommendations(
   }
 
   return combined;
+}
+
+// =====================================================================
+// UNIFIED CLIENT OPPORTUNITIES:
+// Links ALL THREE Admin inputs (الشراكات، التعاقدات، والفرص)
+// directly to the Opportunities box in the Client Portal!
+// =====================================================================
+export interface ClientOpportunityItem {
+  id: string;
+  sourceType: "opportunity" | "contract" | "partnership";
+  sourceLabel: string;
+  sourceBadgeStyle: string;
+  sourceColor: "amber" | "emerald" | "blue";
+  title: string;
+  counterparty: string;
+  counterpartyLabel: string;
+  value: number;
+  valueDisplay: string;
+  stageLabel: string;
+  stageStyle: string;
+  date: string;
+  dateLabel: string;
+  metricPercentage?: number;
+  metricLabel?: string;
+  notes: string;
+}
+
+export function getUnifiedClientOpportunities(
+  opportunities: Opportunity[],
+  contracts: ContractItem[],
+  partnerships: Partnership[]
+): ClientOpportunityItem[] {
+  const list: ClientOpportunityItem[] = [];
+
+  // 1. Commercial / Deal Opportunities (الفرص التجارية والاستثمارية)
+  opportunities.forEach((o) => {
+    const stageCfg = STAGE_CONFIG[o.stage] || STAGE_CONFIG.lead;
+    list.push({
+      id: `opp-${o.id}`,
+      sourceType: "opportunity",
+      sourceLabel: "فرصة تجارية",
+      sourceBadgeStyle: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+      sourceColor: "amber",
+      title: o.title,
+      counterparty: o.client,
+      counterpartyLabel: "العميل المستهدف",
+      value: o.estimatedValue,
+      valueDisplay: money(o.estimatedValue),
+      stageLabel: stageCfg.label,
+      stageStyle: stageCfg.style,
+      date: o.expectedClose || "2026-12-31",
+      dateLabel: "الإغلاق المتوقع",
+      metricPercentage: o.probability,
+      metricLabel: "احتمالية الإغلاق",
+      notes: o.notes || "فرصة استثمارية وتجارية جارية في مسار الصفقات.",
+    });
+  });
+
+  // 2. Contractual Opportunities (فرص التعاقدات والاتفاقيات)
+  contracts.forEach((c) => {
+    const statusCfg = CONTRACT_STATUS[c.status] || CONTRACT_STATUS.active;
+    list.push({
+      id: `opp-c-${c.id}`,
+      sourceType: "contract",
+      sourceLabel: "فرصة تعاقد ملزم",
+      sourceBadgeStyle: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+      sourceColor: "emerald",
+      title: `تعاقد: ${c.title}`,
+      counterparty: c.party,
+      counterpartyLabel: "الجهة المتعاقدة",
+      value: c.value,
+      valueDisplay: money(c.value),
+      stageLabel: statusCfg.label,
+      stageStyle: statusCfg.style,
+      date: c.endDate || "2026-12-31",
+      dateLabel: "نهاية التعاقد",
+      metricPercentage: c.progress,
+      metricLabel: "نسبة التنفيذ",
+      notes: c.notes || `عقد ساري بقيمة تعاقدية معتمدة ${money(c.value)} للفترة ${c.startDate} إلى ${c.endDate}.`,
+    });
+  });
+
+  // 3. Strategic Partnership Opportunities (فرص الشراكات والتعاون)
+  partnerships.forEach((p) => {
+    const statusCfg = PARTNERSHIP_STATUS[p.status] || PARTNERSHIP_STATUS.active;
+    const typeLabel = PARTNERSHIP_TYPES[p.type] || p.type;
+    list.push({
+      id: `opp-p-${p.id}`,
+      sourceType: "partnership",
+      sourceLabel: "فرصة شراكة استراتيجية",
+      sourceBadgeStyle: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      sourceColor: "blue",
+      title: `شراكة: ${p.name}`,
+      counterparty: p.contact ? `${p.field} — ${p.contact}` : p.field,
+      counterpartyLabel: "مجال الشراكة والتواصل",
+      value: 0,
+      valueDisplay: typeLabel,
+      stageLabel: statusCfg.label,
+      stageStyle: statusCfg.style,
+      date: "نشطة ومستمرة",
+      dateLabel: "حالة التعاون",
+      notes: p.notes || `شراكة معتمدة لفتح آفاق التعاون والتوسع في قطاع ${p.field}.`,
+    });
+  });
+
+  return list;
 }

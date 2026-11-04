@@ -333,9 +333,11 @@ export default function WorkClient() {
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 dark:border-white/10 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white">شغلي</h1>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white">
+            شغلي — الشؤون وإدارة الأعمال
+          </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            إدارة أركان العمل الأربعة: الشراكات، التعاقدات، الفرص، والتوصيات المرتبطة بالصفحة الرئيسية
+            إدارة الشراكات، التعاقدات، الفرص، والتوصيات — مرتبطة مباشرة وبشكل لحظي بخانتي الفرص والتوصيات في صفحة العميل
           </p>
         </div>
 
