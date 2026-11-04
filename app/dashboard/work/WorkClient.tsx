@@ -113,13 +113,14 @@ export default function WorkClient() {
     }
   }, []);
 
-  // Save changes to localStorage
+  // Save changes to localStorage & notify connected portals
   useEffect(() => {
     if (mounted && typeof window !== "undefined") {
       try {
         localStorage.setItem(KEY_P, JSON.stringify(partnerships));
         localStorage.setItem(KEY_C, JSON.stringify(contracts));
         localStorage.setItem(KEY_O, JSON.stringify(opportunities));
+        window.dispatchEvent(new Event("opekia_data_updated"));
       } catch {}
     }
   }, [partnerships, contracts, opportunities, mounted]);

@@ -1,44 +1,133 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Sparkles,
   TrendingUp,
   Search,
   Clock,
-  DollarSign,
   CheckCircle2,
-  ChevronLeft,
-  Briefcase,
   Lightbulb,
-  ShieldCheck,
   Target,
-  ArrowUpRight,
+  RefreshCw,
+  FileCheck2,
+  Handshake,
 } from "lucide-react";
 import {
-  SEED_RECOMMENDATIONS,
+  getAdminPartnerships,
+  getAdminContracts,
+  getAdminOpportunities,
+  generateRecommendationsFromAdminInputs,
+  KEY_PARTNERSHIPS,
+  KEY_CONTRACTS,
+  KEY_OPPORTUNITIES,
+} from "@/lib/portal-sync";
+import {
   PRIORITY_CONFIG,
   STATUS_CONFIG as REC_STATUS_CONFIG,
   type Recommendation,
 } from "@/lib/recommendations";
 import {
-  SEED_OPPORTUNITIES,
   STAGE_CONFIG,
   type Opportunity,
+  type Partnership,
+  type ContractItem,
 } from "@/lib/work-three";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 const money = (n: number) =>
   n.toLocaleString("ar-EG", { style: "currency", currency: "EGP", maximumFractionDigits: 0 });
 
 export default function PortalHomeClient() {
-  const [recommendations] = useState<Recommendation[]>(SEED_RECOMMENDATIONS);
-  const [opportunities] = useState<Opportunity[]>(SEED_OPPORTUNITIES);
+  const [mounted, setMounted] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Live admin inputs state
+  const [partnerships, setPartnerships] = useState<Partnership[]>([]);
+  const [contracts, setContracts] = useState<ContractItem[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+
+  // Search and filter states
   const [recSearch, setRecSearch] = useState("");
   const [oppSearch, setOppSearch] = useState("");
-
   const [activeRecFilter, setActiveRecFilter] = useState<string>("all");
   const [activeOppFilter, setActiveOppFilter] = useState<string>("all");
+
+  // Load and synchronize live admin inputs
+  const syncFromAdminInputs = useCallback(async () => {
+    if (typeof window === "undefined") return;
+
+    // 1. Load from local admin storage
+    const currentP = getAdminPartnerships();
+    const currentC = getAdminContracts();
+    const currentO = getAdminOpportunities();
+
+    setPartnerships(currentP);
+    setContracts(currentC);
+    setOpportunities(currentO);
+
+    // 2. If Supabase is available, sync Supabase contracts
+    if (isSupabaseConfigured) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: dbContracts } = await supabase
+            .from("contracts")
+            .select("*")
+            .eq("user_id", user.id);
+
+          if (dbContracts && dbContracts.length > 0) {
+            const mappedContracts: ContractItem[] = dbContracts.map((dc: any) => ({
+              id: dc.id,
+              title: dc.title,
+              party: dc.partner || "طرف متعاقد",
+              value: Number(dc.value) || 0,
+              startDate: dc.start_date || "",
+              endDate: dc.end_date || "",
+              progress: Number(dc.progress) || 0,
+              status: (dc.status as "active" | "review" | "expired") || "active",
+              notes: dc.notes || "",
+            }));
+
+            setContracts(mappedContracts);
+          }
+        }
+      } catch (err) {
+        console.warn("Supabase portal sync note:", err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    syncFromAdminInputs();
+
+    // Listen to real-time storage changes when admin adds/edits data
+    const handleStorageChange = (e: StorageEvent) => {
+      if (
+        e.key === KEY_PARTNERSHIPS ||
+        e.key === KEY_CONTRACTS ||
+        e.key === KEY_OPPORTUNITIES
+      ) {
+        syncFromAdminInputs();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("opekia_data_updated", syncFromAdminInputs);
+    window.addEventListener("focus", syncFromAdminInputs);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("opekia_data_updated", syncFromAdminInputs);
+      window.removeEventListener("focus", syncFromAdminInputs);
+    };
+  }, [syncFromAdminInputs]);
+
+  // Dynamically generated recommendations connected directly to admin's partnerships, contracts, & opportunities
+  const recommendations: Recommendation[] = useMemo(() => {
+    return generateRecommendationsFromAdminInputs(partnerships, contracts, opportunities);
+  }, [partnerships, contracts, opportunities]);
 
   // Filter recommendations
   const filteredRecs = useMemo(() => {
@@ -52,7 +141,7 @@ export default function PortalHomeClient() {
     });
   }, [recommendations, recSearch, activeRecFilter]);
 
-  // Filter opportunities
+  // Filter opportunities (live from admin inputs)
   const filteredOpps = useMemo(() => {
     return opportunities.filter((o) => {
       const matchSearch =
@@ -64,13 +153,48 @@ export default function PortalHomeClient() {
     });
   }, [opportunities, oppSearch, activeOppFilter]);
 
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await syncFromAdminInputs();
+    setTimeout(() => setRefreshing(false), 500);
+  };
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-6">
+      {/* Live Sync Status Pill */}
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+        <div className="flex items-center gap-2">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+          <span>
+            مزامنة مباشرة مع مدخلات الإدارة: (
+            <strong className="text-slate-800 dark:text-slate-200">{contracts.length} تعاقدات</strong>،{" "}
+            <strong className="text-slate-800 dark:text-slate-200">{partnerships.length} شراكات</strong>،{" "}
+            <strong className="text-slate-800 dark:text-slate-200">{opportunities.length} فرص</strong>)
+          </span>
+        </div>
+
+        <button
+          onClick={handleManualRefresh}
+          className="flex items-center gap-1 hover:text-blue-500 transition text-[11px]"
+        >
+          <RefreshCw size={12} className={refreshing ? "animate-spin text-blue-500" : ""} />
+          <span>تحديث البيانات</span>
+        </button>
+      </div>
+
       {/* The Two Main Sections: 1. التوصيات | 2. الفرص */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* =================================================================== */}
-        {/* الخانة الأولى: التوصيات (Recommendations) */}
+        {/* الخانة الأولى: التوصيات (Recommendations - Linked to Contracts & Partnerships) */}
         {/* =================================================================== */}
         <div className="flex flex-col rounded-3xl border-2 border-blue-500/30 bg-white/90 p-6 shadow-xl backdrop-blur-xl dark:border-blue-500/25 dark:bg-slate-900/80 transition-all hover:border-blue-500/50">
           
@@ -85,7 +209,7 @@ export default function PortalHomeClient() {
                   التوصيات
                 </h2>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  توجيهات وخطط استراتيجية مخصصة لحسابك
+                  توصيات ذكية مستخلصة من مدخلات الشراكات والتعاقدات
                 </span>
               </div>
             </div>
@@ -103,7 +227,7 @@ export default function PortalHomeClient() {
                 type="text"
                 value={recSearch}
                 onChange={(e) => setRecSearch(e.target.value)}
-                placeholder="بحث في التوصيات..."
+                placeholder="بحث في التوصيات التلقائية..."
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pe-9 ps-3 text-xs outline-none transition focus:border-blue-400 dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
@@ -132,13 +256,13 @@ export default function PortalHomeClient() {
             </div>
           </div>
 
-          {/* Recommendations List (Read-Only) */}
+          {/* Recommendations List (Linked directly to Admin's contracts & partnerships) */}
           <div className="mt-3 flex-1 space-y-3 overflow-y-auto max-h-[600px] pe-1">
             {filteredRecs.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-white/10">
                 <Lightbulb className="mx-auto text-slate-400 mb-2" size={28} />
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  لا توجد توصيات تطابق البحث
+                  لا توجد توصيات تطابق معايير البحث
                 </p>
               </div>
             ) : (
@@ -158,8 +282,15 @@ export default function PortalHomeClient() {
                     className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition-all hover:border-blue-400 hover:shadow-md dark:border-white/10 dark:bg-slate-950/50"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400">
-                        {rec.category}
+                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        {rec.category.includes("تعاقد") ? (
+                          <FileCheck2 size={12} />
+                        ) : rec.category.includes("شراكة") ? (
+                          <Handshake size={12} />
+                        ) : (
+                          <Sparkles size={12} />
+                        )}
+                        <span>{rec.category}</span>
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${priorityMeta.style}`}>
@@ -197,7 +328,7 @@ export default function PortalHomeClient() {
         </div>
 
         {/* =================================================================== */}
-        {/* الخانة الثانية: الفرص (Opportunities) */}
+        {/* الخانة الثانية: الفرص (Opportunities - Live from Admin Opportunities) */}
         {/* =================================================================== */}
         <div className="flex flex-col rounded-3xl border-2 border-amber-500/30 bg-white/90 p-6 shadow-xl backdrop-blur-xl dark:border-amber-500/25 dark:bg-slate-900/80 transition-all hover:border-amber-500/50">
           
@@ -212,7 +343,7 @@ export default function PortalHomeClient() {
                   الفرص
                 </h2>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  المشاريع الاستثمارية والصفقات المتاحة
+                  الصفقات والمشاريع المعتمدة والمدخلة بواسطة الإدارة
                 </span>
               </div>
             </div>
@@ -230,7 +361,7 @@ export default function PortalHomeClient() {
                 type="text"
                 value={oppSearch}
                 onChange={(e) => setOppSearch(e.target.value)}
-                placeholder="بحث في الفرص..."
+                placeholder="بحث في الفرص المدخلة..."
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2 pe-9 ps-3 text-xs outline-none transition focus:border-amber-400 dark:border-white/10 dark:bg-white/5 dark:text-white"
               />
             </div>
@@ -260,13 +391,13 @@ export default function PortalHomeClient() {
             </div>
           </div>
 
-          {/* Opportunities List (Read-Only) */}
+          {/* Opportunities List (Direct live admin inputs) */}
           <div className="mt-3 flex-1 space-y-3 overflow-y-auto max-h-[600px] pe-1">
             {filteredOpps.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-white/10">
                 <Target className="mx-auto text-slate-400 mb-2" size={28} />
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  لا توجد فرص تطابق البحث
+                  لا توجد فرص مسجلة تطابق البحث
                 </p>
               </div>
             ) : (
