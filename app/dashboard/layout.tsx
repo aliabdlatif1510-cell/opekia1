@@ -20,9 +20,6 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 const NAV = [
   { href: "/dashboard", label: "الرئيسية", code: "00", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/wishes", label: "نفسك في إيه؟", code: "AI", icon: Sparkles },
-  { href: "/dashboard/family", label: "عائلتي", code: "01", icon: Users },
-  { href: "/dashboard/home", label: "بيتي", code: "02", icon: Home },
-  { href: "/dashboard/work", label: "شغلي", code: "03", icon: Briefcase },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

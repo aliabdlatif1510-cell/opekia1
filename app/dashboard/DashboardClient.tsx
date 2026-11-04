@@ -99,20 +99,7 @@ export default function DashboardClient() {
       <div className="pointer-events-none absolute top-1/2 start-1/4 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/15 blur-[140px]" />
       <div className="pointer-events-none absolute bottom-0 end-1/4 h-96 w-96 rounded-full bg-blue-600/15 blur-[140px]" />
 
-      {/* Top Floating Badge for "نفسك في إيه؟" */}
-      <div className="relative z-10 mb-8">
-        <Link
-          href="/dashboard/wishes"
-          className="group inline-flex items-center gap-2.5 rounded-full border border-emerald-500/30 bg-white/80 px-5 py-2 text-xs font-black text-slate-800 shadow-xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500 hover:bg-emerald-500/15 hover:shadow-emerald-500/20 dark:border-white/15 dark:bg-navy-800/80 dark:text-white dark:hover:border-emerald-400"
-        >
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md shadow-emerald-500/30 transition group-hover:rotate-12">
-            <Sparkles size={13} />
-          </span>
-          <span className="text-slate-600 dark:text-slate-300">مساحة الأفكار:</span>
-          <strong className="text-emerald-600 dark:text-emerald-400">نفسك في إيه؟</strong>
-          <ChevronLeft size={14} className="text-slate-400 transition group-hover:-translate-x-1 dark:text-slate-500" />
-        </Link>
-      </div>
+
 
       {/* Main Container */}
       <div className="relative z-10 flex w-full max-w-md flex-col items-center">
