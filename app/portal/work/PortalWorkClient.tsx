@@ -172,18 +172,18 @@ export default function PortalWorkClient() {
     return getAllRecommendations(adminRecs, partnerships, contracts, opportunities);
   }, [adminRecs, partnerships, contracts, opportunities]);
 
-  // 3. Interested Items (الرسائل التي أبدى العميل اهتمامه بها)
+  // 3. Interested Items (مرتبطة بالفرص التي أبدى العميل اهتمامه بها)
   const interestedItems = useMemo(() => {
     const list: Array<{
       id: string;
       title: string;
       content: string;
       date: string;
-      type: "opportunity" | "recommendation";
+      type: "opportunity";
       sourceType?: string;
       typeLabel: string;
       badgeStyle: string;
-      colorType: "amber" | "purple" | "emerald" | "blue";
+      colorType: "amber" | "emerald" | "blue";
       counterparty?: string;
       valueDisplay?: string;
     }> = [];
@@ -207,24 +207,8 @@ export default function PortalWorkClient() {
       }
     });
 
-    // Add recommendations marked as interested
-    recommendations.forEach((rec) => {
-      if (interestedMap[rec.id]) {
-        list.push({
-          id: rec.id,
-          title: rec.title,
-          content: rec.description,
-          date: rec.date,
-          type: "recommendation",
-          typeLabel: rec.category || "توصية تنفيذية",
-          badgeStyle: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-          colorType: "purple",
-        });
-      }
-    });
-
     return list;
-  }, [unifiedOpportunities, recommendations, interestedMap]);
+  }, [unifiedOpportunities, interestedMap]);
 
   // Open Opportunity in Modal
   const openOpportunity = (item: ClientOpportunityItem) => {
@@ -538,18 +522,18 @@ export default function PortalWorkClient() {
                     اهتماماتي
                   </h2>
                   <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    {interestedItems.length} رسائل
+                    {interestedItems.length} فرص
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-slate-400">
-                  {openInterested ? "انقر هنا لإخفاء الرسائل" : "انقر هنا لعرض الرسائل التي سجلت اهتمامك بها"}
+                  {openInterested ? "انقر هنا لإخفاء الفرص المهتم بها" : "انقر هنا لعرض الفرص التي سجلت اهتمامك بها"}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="hidden sm:inline-block rounded-xl bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                {openInterested ? "إخفاء الرسائل" : "عرض الرسائل"}
+                {openInterested ? "إخفاء الفرص" : "عرض الفرص"}
               </span>
               <div
                 className={`flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-all duration-200 dark:bg-white/5 dark:text-slate-300 ${
@@ -565,13 +549,12 @@ export default function PortalWorkClient() {
             <div className="mt-5 pt-5 border-t border-slate-100 dark:border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
               {interestedItems.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-white/10">
-                  لم تقم بالضغط على «اهتم» في أي رسالة حتى الآن. انقر على «اهتم» في رسائل الفرص أو التوصيات لتجدها محفوظة هنا.
+                  لم تقم بالضغط على «اهتم» في أي فرصة حتى الآن. انقر على «اهتم» في خانة الفرص بالأعلى لتجدها محفوظة هنا.
                 </div>
               ) : (
                 interestedItems.map((item) => {
                   const isContract = item.sourceType === "contract";
                   const isPartnership = item.sourceType === "partnership";
-                  const isRec = item.type === "recommendation";
 
                   return (
                     <div
@@ -594,18 +577,14 @@ export default function PortalWorkClient() {
                       <div className="flex items-center gap-3.5 min-w-0">
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl group-hover/item:scale-105 transition-transform ${
-                            isRec
-                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                              : isContract
+                            isContract
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                               : isPartnership
                               ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                               : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                           }`}
                         >
-                          {isRec ? (
-                            <Sparkles size={18} />
-                          ) : isContract ? (
+                          {isContract ? (
                             <FileCheck2 size={18} />
                           ) : isPartnership ? (
                             <Handshake size={18} />
@@ -627,7 +606,7 @@ export default function PortalWorkClient() {
                         </div>
                       </div>
 
-                      {/* زر إلغاء الاهتمام */}
+                      {/* زر إلغاء الاهتمام: تم الاهتمام أو إلغاء */}
                       <button
                         type="button"
                         onClick={(e) => {
