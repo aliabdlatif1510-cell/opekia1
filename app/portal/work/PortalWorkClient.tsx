@@ -11,6 +11,7 @@ import {
   Calendar,
   Eye,
   X,
+  ChevronDown,
 } from "lucide-react";
 import {
   getAdminPartnerships,
@@ -55,6 +56,10 @@ export default function PortalWorkClient() {
   // Active modal message to read full details
   const [activeMessage, setActiveMessage] = useState<OpenMessageModalData | null>(null);
 
+  // Click-to-show toggle states for Recommendations and Opportunities (not fixed on screen)
+  const [openRecs, setOpenRecs] = useState(false);
+  const [openOpps, setOpenOpps] = useState(false);
+
   const loadData = useCallback(() => {
     if (typeof window !== "undefined") {
       try {
@@ -76,6 +81,15 @@ export default function PortalWorkClient() {
   useEffect(() => {
     setMounted(true);
     loadData();
+
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get("tab");
+        if (tab === "recommendations") setOpenRecs(true);
+        if (tab === "opportunities") setOpenOpps(true);
+      } catch {}
+    }
 
     const handleUpdate = () => loadData();
     window.addEventListener("opekia_data_updated", handleUpdate);
@@ -206,7 +220,7 @@ export default function PortalWorkClient() {
             شغلي
           </h1>
           <p className="mt-1 text-xs md:text-sm text-slate-500 dark:text-slate-400">
-            رسائل التوصيات والفرص الموجهة إليك — انقر على أي رسالة لفتحها وقراءتها بالكامل
+            رسائل التوصيات والفرص الموجهة إليك — انقر على التوصيات أو الفرص لعرض الرسائل
           </p>
         </div>
 
@@ -219,177 +233,231 @@ export default function PortalWorkClient() {
         </button>
       </div>
 
-      {/* Two Simple Message Columns: التوصيات & الفرص */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Collapsible Sections: التوصيات & الفرص (انقر للإظهار / الإخفاء) */}
+      <div className="space-y-6">
         
         {/* =================================================================== */}
-        {/* الخانة الأولى: التوصيات (قابلة للفتح + عنوان + اهتم) */}
+        {/* الخانة الأولى: التوصيات (انقر للفتح والإظهار) */}
         {/* =================================================================== */}
-        <div className="rounded-3xl border border-purple-500/20 bg-white/90 p-5 shadow-lg backdrop-blur-xl dark:border-purple-500/20 dark:bg-slate-900/80">
+        <div className="rounded-3xl border border-purple-500/20 bg-white/90 p-5 shadow-lg backdrop-blur-xl transition hover:border-purple-400/40 dark:border-purple-500/20 dark:bg-slate-900/80">
           
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 dark:border-white/5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500 text-white shadow-sm shadow-purple-500/30">
-                <Sparkles size={18} />
+          <button
+            type="button"
+            onClick={() => setOpenRecs((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-3 text-start transition group cursor-pointer"
+            aria-expanded={openRecs}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-500 text-white shadow-md shadow-purple-500/30 group-hover:scale-105 transition-transform">
+                <Sparkles size={20} />
               </div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                التوصيات
-              </h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white">
+                    التوصيات
+                  </h2>
+                  <span className="rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-bold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                    {recommendations.length} رسائل
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {openRecs ? "انقر هنا لإخفاء الرسائل" : "انقر هنا لعرض رسائل التوصيات"}
+                </p>
+              </div>
             </div>
-            <span className="rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-bold text-purple-600 dark:text-purple-400">
-              {recommendations.length} رسائل
-            </span>
-          </div>
 
-          <div className="space-y-3">
-            {recommendations.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-white/10">
-                لا توجد توصيات حالياً
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-block rounded-xl bg-purple-500/10 px-3 py-1.5 text-xs font-bold text-purple-600 dark:text-purple-400">
+                {openRecs ? "إخفاء الرسائل" : "عرض الرسائل"}
+              </span>
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-all duration-200 dark:bg-white/5 dark:text-slate-300 ${
+                  openRecs ? "rotate-180 bg-purple-600 text-white dark:bg-purple-600" : "group-hover:bg-purple-100 dark:group-hover:bg-white/10"
+                }`}
+              >
+                <ChevronDown size={18} />
               </div>
-            ) : (
-              recommendations.map((rec) => {
-                const isInterested = !!interestedMap[rec.id];
+            </div>
+          </button>
 
-                return (
-                  <div
-                    key={rec.id}
-                    onClick={() => openRecommendation(rec)}
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-purple-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-105 transition-transform">
-                        <Sparkles size={18} />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors line-clamp-1">
-                          {rec.title}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                          <span>📅 {rec.date}</span>
+          {openRecs && (
+            <div className="mt-5 pt-5 border-t border-slate-100 dark:border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              {recommendations.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-white/10">
+                  لا توجد توصيات حالياً
+                </div>
+              ) : (
+                recommendations.map((rec) => {
+                  const isInterested = !!interestedMap[rec.id];
+
+                  return (
+                    <div
+                      key={rec.id}
+                      onClick={() => openRecommendation(rec)}
+                      className="group/item flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-purple-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover/item:scale-105 transition-transform">
+                          <Sparkles size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-white group-hover/item:text-purple-600 transition-colors line-clamp-1">
+                            {rec.title}
+                          </h3>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            <span>📅 {rec.date}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* زر اهتم في قلب الرسالة */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleInterest(rec.id);
-                      }}
-                      className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
-                        isInterested
-                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
-                          : "bg-purple-600 text-white shadow-md shadow-purple-500/25 hover:bg-purple-500 active:scale-95"
-                      }`}
-                    >
-                      {isInterested ? (
-                        <>
-                          <Check size={13} />
-                          <span>تم الاهتمام</span>
-                        </>
-                      ) : (
-                        <span>اهتم</span>
-                      )}
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                      {/* زر اهتم في قلب الرسالة */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleInterest(rec.id);
+                        }}
+                        className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
+                          isInterested
+                            ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
+                            : "bg-purple-600 text-white shadow-md shadow-purple-500/25 hover:bg-purple-500 active:scale-95"
+                        }`}
+                      >
+                        {isInterested ? (
+                          <>
+                            <Check size={13} />
+                            <span>تم الاهتمام</span>
+                          </>
+                        ) : (
+                          <span>اهتم</span>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
 
         {/* =================================================================== */}
-        {/* الخانة الثانية: الفرص (قابلة للفتح + عنوان + اهتم) */}
+        {/* الخانة الثانية: الفرص (انقر للفتح والإظهار) */}
         {/* =================================================================== */}
-        <div className="rounded-3xl border border-amber-500/20 bg-white/90 p-5 shadow-lg backdrop-blur-xl dark:border-amber-500/20 dark:bg-slate-900/80">
+        <div className="rounded-3xl border border-amber-500/20 bg-white/90 p-5 shadow-lg backdrop-blur-xl transition hover:border-amber-400/40 dark:border-amber-500/20 dark:bg-slate-900/80">
           
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 dark:border-white/5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm shadow-amber-500/30">
-                <TrendingUp size={18} />
+          <button
+            type="button"
+            onClick={() => setOpenOpps((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-3 text-start transition group cursor-pointer"
+            aria-expanded={openOpps}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/30 group-hover:scale-105 transition-transform">
+                <TrendingUp size={20} />
               </div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white">
-                الفرص
-              </h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white">
+                    الفرص
+                  </h2>
+                  <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    {unifiedOpportunities.length} رسائل
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {openOpps ? "انقر هنا لإخفاء الرسائل" : "انقر هنا لعرض رسائل الفرص"}
+                </p>
+              </div>
             </div>
-            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400">
-              {unifiedOpportunities.length} رسائل
-            </span>
-          </div>
 
-          <div className="space-y-3">
-            {unifiedOpportunities.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-white/10">
-                لا توجد فرص حالياً
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-block rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
+                {openOpps ? "إخفاء الرسائل" : "عرض الرسائل"}
+              </span>
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-all duration-200 dark:bg-white/5 dark:text-slate-300 ${
+                  openOpps ? "rotate-180 bg-amber-500 text-white dark:bg-amber-500" : "group-hover:bg-amber-100 dark:group-hover:bg-white/10"
+                }`}
+              >
+                <ChevronDown size={18} />
               </div>
-            ) : (
-              unifiedOpportunities.map((item) => {
-                const isInterested = !!interestedMap[item.id];
-                const isContract = item.sourceType === "contract";
-                const isPartnership = item.sourceType === "partnership";
+            </div>
+          </button>
 
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => openOpportunity(item)}
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-amber-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
-                  >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl group-hover:scale-105 transition-transform ${
-                          isContract
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : isPartnership
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                        }`}
-                      >
-                        {isContract ? (
-                          <FileCheck2 size={18} />
-                        ) : isPartnership ? (
-                          <Handshake size={18} />
-                        ) : (
-                          <TrendingUp size={18} />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-white group-hover:text-amber-600 transition-colors line-clamp-1">
-                          {item.title}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
-                          <span>📅 {item.date}</span>
+          {openOpps && (
+            <div className="mt-5 pt-5 border-t border-slate-100 dark:border-white/5 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              {unifiedOpportunities.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-white/10">
+                  لا توجد فرص حالياً
+                </div>
+              ) : (
+                unifiedOpportunities.map((item) => {
+                  const isInterested = !!interestedMap[item.id];
+                  const isContract = item.sourceType === "contract";
+                  const isPartnership = item.sourceType === "partnership";
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => openOpportunity(item)}
+                      className="group/item flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-amber-400 hover:shadow-md cursor-pointer dark:border-white/10 dark:bg-slate-950/60"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl group-hover/item:scale-105 transition-transform ${
+                            isContract
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              : isPartnership
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          }`}
+                        >
+                          {isContract ? (
+                            <FileCheck2 size={18} />
+                          ) : isPartnership ? (
+                            <Handshake size={18} />
+                          ) : (
+                            <TrendingUp size={18} />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-sm md:text-base text-slate-900 dark:text-white group-hover/item:text-amber-600 transition-colors line-clamp-1">
+                            {item.title}
+                          </h3>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                            <span>📅 {item.date}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* زر اهتم في قلب الرسالة */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleInterest(item.id);
-                      }}
-                      className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
-                        isInterested
-                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
-                          : "bg-amber-500 text-white shadow-md shadow-amber-500/25 hover:bg-amber-400 active:scale-95"
-                      }`}
-                    >
-                      {isInterested ? (
-                        <>
-                          <Check size={13} />
-                          <span>تم الاهتمام</span>
-                        </>
-                      ) : (
-                        <span>اهتم</span>
-                      )}
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                      {/* زر اهتم في قلب الرسالة */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleInterest(item.id);
+                        }}
+                        className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all duration-200 ${
+                          isInterested
+                            ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
+                            : "bg-amber-500 text-white shadow-md shadow-amber-500/25 hover:bg-amber-400 active:scale-95"
+                        }`}
+                      >
+                        {isInterested ? (
+                          <>
+                            <Check size={13} />
+                            <span>تم الاهتمام</span>
+                          </>
+                        ) : (
+                          <span>اهتم</span>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
       </div>
 
